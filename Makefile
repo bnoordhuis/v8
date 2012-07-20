@@ -79,6 +79,10 @@ endif
 ifeq ($(debuggersupport), off)
   GYPFLAGS += -Dv8_enable_debugger_support=0
 endif
+# postmortem=on
+ifeq ($(postmortem), on)
+  GYPFLAGS += -Dv8_postmortem_support=true
+endif
 # soname_version=1.2.3
 ifdef soname_version
   GYPFLAGS += -Dsoname_version=$(soname_version)
