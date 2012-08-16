@@ -1215,6 +1215,8 @@ def BuildOptions():
   result.add_option("--simulator", help="Run tests with architecture simulator",
       default='none')
   result.add_option("--special-command", default=None)
+  result.add_option("--gdb", help="Run tests through gdb",
+      default=False, action="store_true")
   result.add_option("--valgrind", help="Run tests through valgrind",
       default=False, action="store_true")
   result.add_option("--cat", help="Print the source of the tests",
@@ -1425,6 +1427,12 @@ def Main():
     for arg in args:
       path = SplitPath(arg)
       paths.append(path)
+
+  # Check for --gdb option. If enabled, we overwrite the special
+  # command flag with a command that uses the run-gdb.py script.
+  if options.gdb:
+    run_gdb = join(workspace, "tools", "run-gdb.py")
+    options.special_command = "python -u " + run_gdb + " @"
 
   # Check for --valgrind option. If enabled, we overwrite the special
   # command flag with a command that uses the run-valgrind.py script.

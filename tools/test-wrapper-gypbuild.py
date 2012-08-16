@@ -85,6 +85,8 @@ def BuildOptions():
   result.add_option("--snapshot", help="Run the tests with snapshot turned on",
       default=False, action="store_true")
   result.add_option("--special-command", default=None)
+  result.add_option("--gdb", help="Run tests through gdb",
+      default=False, action="store_true")
   result.add_option("--valgrind", help="Run tests through valgrind",
       default=False, action="store_true")
   result.add_option("--cat", help="Print the source of the tests",
@@ -180,6 +182,8 @@ def PassOnOptions(options):
     result += ['--snapshot']
   if options.special_command:
     result += ['--special-command="%s"' % options.special_command]
+  if options.gdb:
+    result += ['--gdb']
   if options.valgrind:
     result += ['--valgrind']
   if options.cat:
