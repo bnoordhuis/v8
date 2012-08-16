@@ -743,6 +743,11 @@
                 '<(SHARED_INTERMEDIATE_DIR)/debug-support.cc',
               ]
             }],
+            ['v8_enable_gdbjit==1', {
+              'sources': [
+                '../../src/gdb-jit.cc',
+              ]
+            }],
           ],
         },
         {

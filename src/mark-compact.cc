@@ -777,13 +777,6 @@ void MarkCompactCollector::Prepare(GCTracer* tracer) {
 
   ASSERT(!FLAG_never_compact || !FLAG_always_compact);
 
-#ifdef ENABLE_GDB_JIT_INTERFACE
-  if (FLAG_gdbjit) {
-    // If GDBJIT interface is active disable compaction.
-    compacting_collection_ = false;
-  }
-#endif
-
   // Clear marking bits if incremental marking is aborted.
   if (was_marked_incrementally_ && abort_incremental_marking_) {
     heap()->incremental_marking()->Abort();
@@ -792,9 +785,15 @@ void MarkCompactCollector::Prepare(GCTracer* tracer) {
     was_marked_incrementally_ = false;
   }
 
+  bool never_compact = FLAG_never_compact;
+
+#ifdef ENABLE_GDB_JIT_INTERFACE
+  never_compact = never_compact || FLAG_gdbjit;
+#endif
+
   // Don't start compaction if we are in the middle of incremental
   // marking cycle. We did not collect any slots.
-  if (!FLAG_never_compact && !was_marked_incrementally_) {
+  if (!never_compact && !was_marked_incrementally_) {
     StartCompaction(NON_INCREMENTAL_COMPACTION);
   }
 

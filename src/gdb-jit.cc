@@ -31,11 +31,13 @@
 
 #include "bootstrapper.h"
 #include "compiler.h"
+#include "frames-inl.h"
 #include "global-handles.h"
 #include "messages.h"
 #include "platform.h"
 #include "natives.h"
 #include "scopeinfo.h"
+#include "scopes.h"
 
 namespace v8 {
 namespace internal {
@@ -56,8 +58,9 @@ typedef ELFSection DebugSection;
 
 class Writer BASE_EMBEDDED {
  public:
-  explicit Writer(DebugObject* debug_object)
-      : debug_object_(debug_object),
+  Writer(DebugObject* debug_object, Zone* zone)
+      : zone_(zone),
+        debug_object_(debug_object),
         position_(0),
         capacity_(1024),
         buffer_(reinterpret_cast<byte*>(malloc(capacity_))) {
@@ -69,6 +72,10 @@ class Writer BASE_EMBEDDED {
 
   uintptr_t position() const {
     return position_;
+  }
+
+  Zone* zone() {
+    return zone_;
   }
 
   template<typename T>
@@ -179,6 +186,7 @@ class Writer BASE_EMBEDDED {
     return reinterpret_cast<T*>(&buffer_[offset]);
   }
 
+  Zone* zone_;
   DebugObject* debug_object_;
   uintptr_t position_;
   uintptr_t capacity_;
@@ -192,7 +200,8 @@ class DebugSectionBase : public ZoneObject {
  public:
   virtual ~DebugSectionBase() { }
 
-  virtual void WriteBody(Writer::Slot<THeader> header, Writer* writer) {
+  virtual void WriteHeadersAndBody(Writer::Slot<THeader> header,
+                                   Writer* writer) {
     uintptr_t start = writer->position();
     if (WriteBody(writer)) {
       uintptr_t end = writer->position();
@@ -338,7 +347,7 @@ class ELFSection : public DebugSectionBase<ELFSectionHeader> {
 
   void PopulateHeader(Writer::Slot<Header> header, StringTable* strtab);
 
-  virtual void WriteBody(Writer::Slot<Header> header, Writer* w) {
+  virtual void WriteHeadersAndBody(Writer::Slot<Header> header, Writer* w) {
     uintptr_t start = w->position();
     if (WriteBody(w)) {
       uintptr_t end = w->position();
@@ -462,7 +471,7 @@ class StringTable : public ELFSection {
     writer_ = NULL;
   }
 
-  virtual void WriteBody(Writer::Slot<Header> header, Writer* w) {
+  virtual void WriteHeadersAndBody(Writer::Slot<Header> header, Writer* w) {
     ASSERT(writer_ == NULL);
     header->offset = offset_;
     header->size = size_;
@@ -498,10 +507,10 @@ void ELFSection::PopulateHeader(Writer::Slot<ELFSection::Header> header,
 #if defined(__MACH_O)
 class MachO BASE_EMBEDDED {
  public:
-  MachO() : sections_(6) { }
+  explicit MachO(Zone* zone) : sections_(6, zone) { }
 
-  uint32_t AddSection(MachOSection* section) {
-    sections_.Add(section);
+  uint32_t AddSection(MachOSection* section, Zone* zone) {
+    sections_.Add(section, zone);
     return sections_.length() - 1;
   }
 
@@ -613,7 +622,7 @@ class MachO BASE_EMBEDDED {
     header->sizeofcmds = w->position() - load_command_start;
     for (int section = 0; section < sections_.length(); ++section) {
       sections_[section]->PopulateHeader(headers.at(section));
-      sections_[section]->WriteBody(headers.at(section), w);
+      sections_[section]->WriteHeadersAndBody(headers.at(section), w);
     }
     cmd->filesize = w->position() - (uintptr_t)cmd->fileoff;
   }
@@ -627,9 +636,9 @@ class MachO BASE_EMBEDDED {
 #if defined(__ELF)
 class ELF BASE_EMBEDDED {
  public:
-  ELF() : sections_(6) {
-    sections_.Add(new ELFSection("", ELFSection::TYPE_NULL, 0));
-    sections_.Add(new StringTable(".shstrtab"));
+  explicit ELF(Zone* zone) : sections_(6, zone) {
+    sections_.Add(new(zone) ELFSection("", ELFSection::TYPE_NULL, 0), zone);
+    sections_.Add(new(zone) StringTable(".shstrtab"), zone);
   }
 
   void Write(Writer* w) {
@@ -642,8 +651,8 @@ class ELF BASE_EMBEDDED {
     return sections_[index];
   }
 
-  uint32_t AddSection(ELFSection* section) {
-    sections_.Add(section);
+  uint32_t AddSection(ELFSection* section, Zone* zone) {
+    sections_.Add(section, zone);
     section->set_index(sections_.length() - 1);
     return sections_.length() - 1;
   }
@@ -737,7 +746,7 @@ class ELF BASE_EMBEDDED {
     for (int i = 0, length = sections_.length();
          i < length;
          i++) {
-      sections_[i]->WriteBody(headers.at(i), w);
+      sections_[i]->WriteHeadersAndBody(headers.at(i), w);
     }
   }
 
@@ -852,13 +861,13 @@ class ELFSymbol BASE_EMBEDDED {
 
 class ELFSymbolTable : public ELFSection {
  public:
-  explicit ELFSymbolTable(const char* name)
+  explicit ELFSymbolTable(const char* name, Zone* zone)
       : ELFSection(name, TYPE_SYMTAB, sizeof(uintptr_t)),
-        locals_(1),
-        globals_(1) {
+        locals_(1, zone),
+        globals_(1, zone) {
   }
 
-  virtual void WriteBody(Writer::Slot<Header> header, Writer* w) {
+  virtual void WriteHeadersAndBody(Writer::Slot<Header> header, Writer* w) {
     w->Align(header->alignment);
     int total_symbols = locals_.length() + globals_.length() + 1;
     header->offset = w->position();
@@ -883,11 +892,11 @@ class ELFSymbolTable : public ELFSection {
     strtab->DetachWriter();
   }
 
-  void Add(const ELFSymbol& symbol) {
+  void Add(const ELFSymbol& symbol, Zone* zone) {
     if (symbol.binding() == ELFSymbol::BIND_LOCAL) {
-      locals_.Add(symbol);
+      locals_.Add(symbol, zone);
     } else {
-      globals_.Add(symbol);
+      globals_.Add(symbol, zone);
     }
   }
 
@@ -1018,27 +1027,30 @@ class CodeDescription BASE_EMBEDDED {
 #if defined(__ELF)
 static void CreateSymbolsTable(CodeDescription* desc,
                                ELF* elf,
-                               int text_section_index) {
-  ELFSymbolTable* symtab = new ELFSymbolTable(".symtab");
-  StringTable* strtab = new StringTable(".strtab");
+                               int text_section_index,
+                               Zone* zone) {
+  ELFSymbolTable* symtab = new(zone) ELFSymbolTable(".symtab", zone);
+  StringTable* strtab = new(zone) StringTable(".strtab");
 
   // Symbol table should be followed by the linked string table.
-  elf->AddSection(symtab);
-  elf->AddSection(strtab);
+  elf->AddSection(symtab, zone);
+  elf->AddSection(strtab, zone);
 
   symtab->Add(ELFSymbol("V8 Code",
                         0,
                         0,
                         ELFSymbol::BIND_LOCAL,
                         ELFSymbol::TYPE_FILE,
-                        ELFSection::INDEX_ABSOLUTE));
+                        ELFSection::INDEX_ABSOLUTE),
+              zone);
 
   symtab->Add(ELFSymbol(desc->name(),
                         0,
                         desc->CodeSize(),
                         ELFSymbol::BIND_GLOBAL,
                         ELFSymbol::TYPE_FUNC,
-                        text_section_index));
+                        text_section_index),
+              zone);
 }
 #endif  // defined(__ELF)
 
@@ -1095,7 +1107,7 @@ class DebugInfoSection : public DebugSection {
 
     if (desc_->IsInfoAvailable()) {
       CompilationInfo* info = desc_->info();
-      ScopeInfo<FreeStoreAllocationPolicy> scope_info(info->scope());
+      Scope* scope = info->scope();
       w->WriteULEB128(2);
       w->WriteString(desc_->name());
       w->Write<intptr_t>(desc_->CodeStart());
@@ -1111,18 +1123,22 @@ class DebugInfoSection : public DebugSection {
 #endif
       fb_block_size.set(static_cast<uint32_t>(w->position() - fb_block_start));
 
-      int params = scope_info.number_of_parameters();
-      int slots = scope_info.number_of_stack_slots();
-      int context_slots = scope_info.number_of_context_slots();
+      ZoneList<Variable*> stack_locals(0, w->zone());
+      ZoneList<Variable*> context_locals(0, w->zone());
+      scope->CollectStackAndContextLocals(&stack_locals, &context_locals);
+
+      int params = scope->num_parameters();
+      int slots = scope->num_stack_slots();
+      int context_slots = scope->num_heap_slots();
       // The real slot ID is internal_slots + context_slot_id.
       int internal_slots = Context::MIN_CONTEXT_SLOTS;
-      int locals = scope_info.LocalCount();
+      int locals = stack_locals.length();
       int current_abbreviation = 4;
 
       for (int param = 0; param < params; ++param) {
         w->WriteULEB128(current_abbreviation++);
         w->WriteString(
-            *scope_info.ParameterName(param)->ToCString(DISALLOW_NULLS));
+            *scope->parameter(param)->name()->ToCString(DISALLOW_NULLS));
         w->Write<uint32_t>(ty_offset);
         Writer::Slot<uint32_t> block_size = w->CreateSlotHere<uint32_t>();
         uintptr_t block_start = w->position();
@@ -1170,7 +1186,7 @@ class DebugInfoSection : public DebugSection {
       for (int local = 0; local < locals; ++local) {
         w->WriteULEB128(current_abbreviation++);
         w->WriteString(
-            *scope_info.LocalName(local)->ToCString(DISALLOW_NULLS));
+            *stack_locals[local]->name()->ToCString(DISALLOW_NULLS));
         w->Write<uint32_t>(ty_offset);
         Writer::Slot<uint32_t> block_size = w->CreateSlotHere<uint32_t>();
         uintptr_t block_start = w->position();
@@ -1307,13 +1323,18 @@ class DebugAbbrevSection : public DebugSection {
 
     if (extra_info) {
       CompilationInfo* info = desc_->info();
-      ScopeInfo<FreeStoreAllocationPolicy> scope_info(info->scope());
-      int params = scope_info.number_of_parameters();
-      int slots = scope_info.number_of_stack_slots();
-      int context_slots = scope_info.number_of_context_slots();
+      Scope* scope = info->scope();
+
+      ZoneList<Variable*> stack_locals(0, w->zone());
+      ZoneList<Variable*> context_locals(0, w->zone());
+      scope->CollectStackAndContextLocals(&stack_locals, &context_locals);
+
+      int params = scope->num_parameters();
+      int slots = scope->num_stack_slots();
+      int context_slots = scope->num_heap_slots();
       // The real slot ID is internal_slots + context_slot_id.
       int internal_slots = Context::MIN_CONTEXT_SLOTS;
-      int locals = scope_info.LocalCount();
+      int locals = stack_locals.length();
       int total_children =
           params + slots + context_slots + internal_slots + locals + 2;
 
@@ -1418,7 +1439,7 @@ class DebugLineSection : public DebugSection {
     DW_LNE_DEFINE_FILE = 3
   };
 
-  bool WriteBody(Writer* w) {
+  virtual bool WriteBody(Writer* w) {
     // Write prologue.
     Writer::Slot<uint32_t> total_length = w->CreateSlotHere<uint32_t>();
     uintptr_t start = w->position();
@@ -1779,14 +1800,16 @@ bool UnwindInfoSection::WriteBody(Writer* w) {
 
 #endif  // V8_TARGET_ARCH_X64
 
-static void CreateDWARFSections(CodeDescription* desc, DebugObject* obj) {
+static void CreateDWARFSections(CodeDescription* desc,
+                                DebugObject* obj,
+                                Zone* zone) {
   if (desc->IsLineInfoAvailable()) {
-    obj->AddSection(new DebugInfoSection(desc));
-    obj->AddSection(new DebugAbbrevSection(desc));
-    obj->AddSection(new DebugLineSection(desc));
+    obj->AddSection(new(zone) DebugInfoSection(desc), zone);
+    obj->AddSection(new(zone) DebugAbbrevSection(desc), zone);
+    obj->AddSection(new(zone) DebugLineSection(desc), zone);
   }
 #ifdef V8_TARGET_ARCH_X64
-  obj->AddSection(new UnwindInfoSection(desc));
+  obj->AddSection(new(zone) UnwindInfoSection(desc), zone);
 #endif
 }
 
@@ -1904,35 +1927,37 @@ static void UnregisterCodeEntry(JITCodeEntry* entry) {
 }
 
 
-static JITCodeEntry* CreateELFObject(CodeDescription* desc) {
-  ZoneScope zone_scope(Isolate::Current(), DELETE_ON_EXIT);
+static JITCodeEntry* CreateELFObject(CodeDescription* desc, Zone* zone) {
 #ifdef __MACH_O
-  MachO mach_o;
-  Writer w(&mach_o);
+  MachO mach_o(zone);
+  Writer w(&mach_o, zone);
 
-  mach_o.AddSection(new MachOTextSection(kCodeAlignment,
-                                         desc->CodeStart(),
-                                         desc->CodeSize()));
+  MachOTextSection* section = new(zone) MachOTextSection(kCodeAlignment,
+                                                          desc->CodeStart(),
+                                                          desc->CodeSize());
+  mach_o.AddSection(section, zone);
 
-  CreateDWARFSections(desc, &mach_o);
+  CreateDWARFSections(desc, &mach_o, zone);
 
   mach_o.Write(&w, desc->CodeStart(), desc->CodeSize());
 #else
-  ELF elf;
-  Writer w(&elf);
+  ELF elf(zone);
+  Writer w(&elf, zone);
 
-  int text_section_index = elf.AddSection(
-      new FullHeaderELFSection(".text",
-                               ELFSection::TYPE_NOBITS,
-                               kCodeAlignment,
-                               desc->CodeStart(),
-                               0,
-                               desc->CodeSize(),
-                               ELFSection::FLAG_ALLOC | ELFSection::FLAG_EXEC));
+  FullHeaderELFSection* section =
+    new(zone) FullHeaderELFSection(".text",
+                                   ELFSection::TYPE_NOBITS,
+                                   kCodeAlignment,
+                                   desc->CodeStart(),
+                                   0,
+                                   desc->CodeSize(),
+                                   ELFSection::FLAG_ALLOC |
+                                   ELFSection::FLAG_EXEC);
+  int text_section_index = elf.AddSection(section, zone);
 
-  CreateSymbolsTable(desc, &elf, text_section_index);
+  CreateSymbolsTable(desc, &elf, text_section_index, zone);
 
-  CreateDWARFSections(desc, &elf);
+  CreateDWARFSections(desc, &elf, zone);
 
   elf.Write(&w);
 #endif
@@ -2067,8 +2092,11 @@ void GDBJITInterface::AddCode(const char* name,
     return;
   }
 
+  Zone* zone = Isolate::Current()->runtime_zone();
+  ZoneScope zone_scope(zone, DELETE_ON_EXIT);
+
   AddUnwindInfo(&code_desc);
-  JITCodeEntry* entry = CreateELFObject(&code_desc);
+  JITCodeEntry* entry = CreateELFObject(&code_desc, zone);
   ASSERT(!IsLineInfoTagged(entry));
 
   delete lineinfo;
