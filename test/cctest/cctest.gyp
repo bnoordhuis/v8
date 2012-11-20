@@ -188,7 +188,7 @@
             '<(generated_file)',
           ],
           'action': [
-            'python',
+            '<(python)',
             '../../tools/js2c.py',
             '<@(_outputs)',
             'TEST',  # type

@@ -30,6 +30,7 @@
 CXX ?= g++
 LINK ?= g++
 OUTDIR ?= out
+PYTHON ?= python
 TESTJOBS ?=
 GYPFLAGS ?=
 TESTFLAGS ?=
@@ -116,6 +117,8 @@ ifeq ($(hardfp), on)
   GYPFLAGS += -Dv8_use_arm_eabi_hardfloat=true
 endif
 
+GYPFLAGS += "-Dpython=$(PYTHON)"
+
 # ----------------- available targets: --------------------
 # - "dependencies": pulls in external dependencies (currently: GYP)
 # - any arch listed in ARCHES (see below)
@@ -183,7 +186,7 @@ $(BUILDS): $(OUTDIR)/Makefile.$$(basename $$@)
 	@$(MAKE) -C "$(OUTDIR)" -f Makefile.$(basename $@) \
 	         CXX="$(CXX)" LINK="$(LINK)" \
 	         BUILDTYPE=$(shell echo $(subst .,,$(suffix $@)) | \
-	                     python -c "print raw_input().capitalize()") \
+	                     $(PYTHON) -c "print raw_input().capitalize()") \
 	         builddir="$(shell pwd)/$(OUTDIR)/$@"
 
 native: $(OUTDIR)/Makefile.native
@@ -254,14 +257,14 @@ clean: $(addsuffix .clean, $(ARCHES) $(ANDROID_ARCHES)) native.clean
 OUT_MAKEFILES = $(addprefix $(OUTDIR)/Makefile.,$(ARCHES))
 $(OUT_MAKEFILES): $(GYPFILES) $(ENVFILE)
 	GYP_GENERATORS=make \
-	build/gyp/gyp --generator-output="$(OUTDIR)" build/all.gyp \
+	$(PYTHON) build/gyp/gyp --generator-output="$(OUTDIR)" build/all.gyp \
 	              -Ibuild/standalone.gypi --depth=. \
 	              -Dv8_target_arch=$(subst .,,$(suffix $@)) \
 	              -S.$(subst .,,$(suffix $@)) $(GYPFLAGS)
 
 $(OUTDIR)/Makefile.native: $(GYPFILES) $(ENVFILE)
 	GYP_GENERATORS=make \
-	build/gyp/gyp --generator-output="$(OUTDIR)" build/all.gyp \
+	$(PYTHON) build/gyp/gyp --generator-output="$(OUTDIR)" build/all.gyp \
 	              -Ibuild/standalone.gypi --depth=. -S.native $(GYPFLAGS)
 
 must-set-ANDROID_NDK_ROOT_OR_TOOLCHAIN:
