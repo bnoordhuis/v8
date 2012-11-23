@@ -7189,6 +7189,13 @@ class String: public HeapObject {
       ASSERT_EQ(TWO_BYTE, state_);
       return Vector<const uc16>::cast(buffer_);
     }
+    // Return the character length of the string.
+    unsigned Length() const {
+      if (state_ == ASCII) return buffer_.length();
+      if (state_ == TWO_BYTE) return buffer_.length() / 2;
+      UNREACHABLE();
+      return 0;  // Placate compiler.
+    }
 
    private:
     enum State { NON_FLAT, ASCII, TWO_BYTE };
