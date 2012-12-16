@@ -3594,8 +3594,13 @@ static bool BoundsCheckKeyMatch(void* key1, void* key2) {
 class BoundsCheckTable : private ZoneHashMap {
  public:
   BoundsCheckBbData** LookupOrInsert(BoundsCheckKey* key, Zone* zone) {
-    return reinterpret_cast<BoundsCheckBbData**>(
-        &(Lookup(key, key->Hash(), true, ZoneAllocationPolicy(zone))->value));
+    // Avoid type-punning compiler warnings.
+    union {
+      void** in;
+      BoundsCheckBbData** out;
+    } u;
+    u.in = &(Lookup(key, key->Hash(), true, ZoneAllocationPolicy(zone))->value);
+    return u.out;
   }
 
   void Insert(BoundsCheckKey* key, BoundsCheckBbData* data, Zone* zone) {

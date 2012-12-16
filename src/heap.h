@@ -1293,7 +1293,13 @@ class Heap {
   Object** roots_array_start() { return roots_; }
 
   Address* store_buffer_top_address() {
-    return reinterpret_cast<Address*>(&roots_[kStoreBufferTopRootIndex]);
+    // Avoid type-punning compiler warnings.
+    union {
+      Object** in;
+      Address* out;
+    } u;
+    u.in = &roots_[kStoreBufferTopRootIndex];
+    return u.out;
   }
 
   // Get address of native contexts list for serialization support.

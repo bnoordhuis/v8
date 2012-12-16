@@ -1154,7 +1154,15 @@ int PartialSerializer::PartialSnapshotCacheIndex(HeapObject* heap_object) {
   // and we can refer to it from the partial snapshot.
   int length = isolate->serialize_partial_snapshot_cache_length();
   isolate->PushToPartialSnapshotCache(heap_object);
-  startup_serializer_->VisitPointer(reinterpret_cast<Object**>(&heap_object));
+
+  // Avoid type-punning compiler warnings.
+  union {
+    HeapObject** in;
+    Object** out;
+  } u;
+  u.in = &heap_object;
+  startup_serializer_->VisitPointer(u.out);
+
   // We don't recurse from the startup snapshot generator into the partial
   // snapshot generator.
   ASSERT(length == isolate->serialize_partial_snapshot_cache_length() - 1);
