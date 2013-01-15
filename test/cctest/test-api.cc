@@ -6170,6 +6170,10 @@ THREADED_TEST(StringWrite) {
   buf[5] = '\0';
   CHECK_EQ(0, strcmp("abcde", buf));
 
+  CHECK_EQ(0, str->WriteAscii(NULL, 0, 0, String::NO_NULL_TERMINATION));
+  CHECK_EQ(0, str->WriteUtf8(NULL, 0, 0, String::NO_NULL_TERMINATION));
+  CHECK_EQ(0, str->Write(NULL, 0, 0, String::NO_NULL_TERMINATION));
+
   memset(utf8buf, 0x1, sizeof(utf8buf));
   utf8buf[8] = 'X';
   len = str2->WriteUtf8(utf8buf, sizeof(utf8buf), &charlen,
