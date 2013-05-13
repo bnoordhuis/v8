@@ -249,7 +249,7 @@ inline int StrLength(const char* string) {
 template <typename T>
 inline void Swizzle(T* value) {
   char* start = reinterpret_cast<char*>(value);
-  char* end = start + sizeof(*value);
+  char* end = start + sizeof(*value) - 1;
   while (start < end) {
     char t = *start;
     *start++ = *end;

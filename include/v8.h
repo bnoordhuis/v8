@@ -1402,6 +1402,12 @@ class V8EXPORT Value : public Data {
   bool IsArrayBuffer() const;
 
   /**
+   * Returns true if this value is a DataView.
+   * This is an experimental feature.
+   */
+  bool IsDataView() const;
+
+  /**
    * Returns true if this value is one of TypedArrays.
    * This is an experimental feature.
    */
@@ -2450,6 +2456,140 @@ class V8EXPORT ArrayBuffer : public Object {
 
  private:
   ArrayBuffer();
+  static void CheckCast(Value* obj);
+};
+
+
+/**
+ * An instance of the built-in ArrayBuffer constructor (ES6 draft 15.13.5).
+ * This API is experimental and may change significantly.
+ */
+class V8EXPORT DataView : public Object {
+ public:
+  /**
+   * Returns underlying ArrayBuffer.
+   */
+  Local<ArrayBuffer> Buffer();
+
+  /**
+   * Byte offset in |Buffer|
+   */
+  size_t ByteOffset() const;
+
+  /**
+   * Size of data view in bytes.
+   */
+  size_t ByteLength() const;
+
+  /**
+   * Raw pointer to the buffer view data.
+   */
+  void* Data() const;
+
+  static Local<DataView> New(Handle<ArrayBuffer> array_buffer,
+                             size_t byte_offset,
+                             size_t byte_length);
+  V8_INLINE(static DataView* Cast(Value* obj));
+
+  /**
+   * Return the value at |byte_offset| or 0 if |byte_offset| is out of range.
+   */
+  int8_t GetInt8(size_t byte_offset) const;
+
+  /**
+   * Return the value at |byte_offset| or 0 if |byte_offset| is out of range.
+   */
+  uint8_t GetUint8(size_t byte_offset) const;
+
+  /**
+   * Return the value at |byte_offset| or 0 if |byte_offset| is out of range.
+   */
+  int16_t GetInt16(size_t byte_offset, bool little_endian = false) const;
+
+  /**
+   * Return the value at |byte_offset| or 0 if |byte_offset| is out of range.
+   * Reads a big-endian value unless |little_endian| is true.
+   */
+  uint16_t GetUint16(size_t byte_offset, bool little_endian = false) const;
+
+  /**
+   * Return the value at |byte_offset| or 0 if |byte_offset| is out of range.
+   * Reads a big-endian value unless |little_endian| is true.
+   */
+  int32_t GetInt32(size_t byte_offset, bool little_endian = false) const;
+
+  /**
+   * Return the value at |byte_offset| or 0 if |byte_offset| is out of range.
+   * Reads a big-endian value unless |little_endian| is true.
+   */
+  uint32_t GetUint32(size_t byte_offset, bool little_endian = false) const;
+
+  /**
+   * Return the value at |byte_offset| or 0 if |byte_offset| is out of range.
+   * Reads a big-endian value unless |little_endian| is true.
+   */
+  float GetFloat32(size_t byte_offset, bool little_endian = false) const;
+
+  /**
+   * Return the value at |byte_offset| or 0 if |byte_offset| is out of range.
+   * Reads a big-endian value unless |little_endian| is true.
+   */
+  double GetFloat64(size_t byte_offset, bool little_endian = false) const;
+
+  /**
+   * Set the value at |byte_offset| to |value|. Does nothing if |byte_offset|
+   * is out of range.
+   */
+  void SetInt8(size_t byte_offset, int8_t value);
+
+  /**
+   * Set the value at |byte_offset| to |value|. Does nothing if |byte_offset|
+   * is out of range.
+   */
+  void SetUint8(size_t byte_offset, uint8_t value);
+
+  /**
+   * Set the value at |byte_offset| to |value|. Does nothing if |byte_offset|
+   * is out of range. Writes a big-endian value unless |little_endian| is true.
+   */
+  void SetInt16(size_t byte_offset, int16_t value, bool little_endian = false);
+
+  /**
+   * Set the value at |byte_offset| to |value|. Does nothing if |byte_offset|
+   * is out of range.
+   */
+  void SetUint16(size_t byte_offset,
+                 uint16_t value,
+                 bool little_endian = false);
+
+  /**
+   * Set the value at |byte_offset| to |value|. Does nothing if |byte_offset|
+   * is out of range. Writes a big-endian value unless |little_endian| is true.
+   */
+  void SetInt32(size_t byte_offset, int32_t value, bool little_endian = false);
+
+  /**
+   * Set the value at |byte_offset| to |value|. Does nothing if |byte_offset|
+   * is out of range. Writes a big-endian value unless |little_endian| is true.
+   */
+  void SetUint32(size_t byte_offset,
+                 uint32_t value,
+                 bool little_endian = false);
+
+  /**
+   * Set the value at |byte_offset| to |value|. Does nothing if |byte_offset|
+   * is out of range. Writes a big-endian value unless |little_endian| is true.
+   */
+  void SetFloat32(size_t byte_offset, float value, bool little_endian = false);
+
+  /**
+   * Set the value at |byte_offset| to |value|. Does nothing if |byte_offset|
+   * is out of range. Writes a big-endian value unless |little_endian| is true.
+   */
+  void SetFloat64(size_t byte_offset, double value, bool little_endian = false);
+
+ private:
+  DataView();
   static void CheckCast(Value* obj);
 };
 
@@ -5277,7 +5417,7 @@ class Internals {
   static const int kJSObjectHeaderSize = 3 * kApiPointerSize;
   static const int kFixedArrayHeaderSize = 2 * kApiPointerSize;
   static const int kContextHeaderSize = 2 * kApiPointerSize;
-  static const int kContextEmbedderDataIndex = 64;
+  static const int kContextEmbedderDataIndex = 65;
   static const int kFullStringRepresentationMask = 0x07;
   static const int kStringEncodingMask = 0x4;
   static const int kExternalTwoByteRepresentationTag = 0x02;
@@ -6099,6 +6239,14 @@ ArrayBuffer* ArrayBuffer::Cast(v8::Value* value) {
   CheckCast(value);
 #endif
   return static_cast<ArrayBuffer*>(value);
+}
+
+
+DataView* DataView::Cast(v8::Value* value) {
+#ifdef V8_ENABLE_CHECKS
+  CheckCast(value);
+#endif
+  return static_cast<DataView*>(value);
 }
 
 

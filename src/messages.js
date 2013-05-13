@@ -104,6 +104,11 @@ var kMessages = {
   observe_perform_non_function:  ["Cannot perform non-function"],
   observe_notify_non_notifier:   ["notify called on non-notifier object"],
   proto_poison_pill:             ["Generic use of __proto__ accessor not allowed"],
+  not_array_buffer:              ["Argument is not an ArrayBuffer"],
+  not_data_view:                 ["this is not a DataView."],
+  missing_data_view_argument:    ["Missing required argument"],
+  invalid_data_view_offset:      ["Start offset is too large"],
+  invalid_data_view_length:      ["Length is too large"],
   parameterless_typed_array_constr:
                                  ["%0"," constructor should have at least one argument."],
   not_typed_array:               ["this is not a typed array."],

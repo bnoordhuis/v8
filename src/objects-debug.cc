@@ -201,6 +201,9 @@ void HeapObject::HeapObjectVerify() {
     case JS_ARRAY_BUFFER_TYPE:
       JSArrayBuffer::cast(this)->JSArrayBufferVerify();
       break;
+    case JS_DATA_VIEW_TYPE:
+      JSDataView::cast(this)->JSDataViewVerify();
+      break;
     case JS_TYPED_ARRAY_TYPE:
       JSTypedArray::cast(this)->JSTypedArrayVerify();
       break;
@@ -741,12 +744,32 @@ void JSFunctionProxy::JSFunctionProxyVerify() {
   VerifyPointer(construct_trap());
 }
 
+
 void JSArrayBuffer::JSArrayBufferVerify() {
   CHECK(IsJSArrayBuffer());
   JSObjectVerify();
   VerifyPointer(byte_length());
   CHECK(byte_length()->IsSmi() || byte_length()->IsHeapNumber()
         || byte_length()->IsUndefined());
+}
+
+
+void JSDataView::JSDataViewVerify() {
+  CHECK(IsJSDataView());
+  JSObjectVerify();
+
+  VerifyPointer(buffer());
+  CHECK(buffer()->IsJSArrayBuffer() || buffer()->IsUndefined());
+
+  VerifyPointer(byte_offset());
+  CHECK(byte_offset()->IsSmi() || byte_offset()->IsHeapNumber()
+        || byte_offset()->IsUndefined());
+
+  VerifyPointer(byte_length());
+  CHECK(byte_length()->IsSmi() || byte_length()->IsHeapNumber()
+        || byte_length()->IsUndefined());
+
+  VerifyPointer(elements());
 }
 
 

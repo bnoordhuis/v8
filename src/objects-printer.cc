@@ -188,6 +188,9 @@ void HeapObject::HeapObjectPrint(FILE* out) {
     case JS_ARRAY_BUFFER_TYPE:
       JSArrayBuffer::cast(this)->JSArrayBufferPrint(out);
       break;
+    case JS_DATA_VIEW_TYPE:
+      JSDataView::cast(this)->JSDataViewPrint(out);
+      break;
     case JS_TYPED_ARRAY_TYPE:
       JSTypedArray::cast(this)->JSTypedArrayPrint(out);
       break;
@@ -810,6 +813,22 @@ void JSArrayBuffer::JSArrayBufferPrint(FILE* out) {
   PrintF(out, " - byte_length = ");
   byte_length()->ShortPrint(out);
   PrintF(out, "\n");
+}
+
+
+void JSDataView::JSDataViewPrint(FILE* out) {
+  HeapObject::PrintHeader(out, "JSDataView");
+  PrintF(out, " - map = 0x%p\n", reinterpret_cast<void*>(map()));
+  PrintF(out, " - buffer =");
+  buffer()->ShortPrint(out);
+  PrintF(out, "\n - byte_offset = ");
+  byte_offset()->ShortPrint(out);
+  PrintF(out, "\n - byte_length = ");
+  byte_length()->ShortPrint(out);
+  PrintF(out, " - byte_length = ");
+  byte_length()->ShortPrint(out);
+  PrintF(out, "\n");
+  PrintElements(out);
 }
 
 

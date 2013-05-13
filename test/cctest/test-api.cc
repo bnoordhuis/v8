@@ -2632,6 +2632,65 @@ THREADED_TEST(ArrayBuffer_External) {
 }
 
 
+THREADED_TEST(DataView) {
+  i::FLAG_harmony_data_view = true;
+  i::FLAG_harmony_typed_arrays = true;
+
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+
+  char data[1024];
+  const int kByteOffset = 256;
+  const int kByteLength = sizeof(data) - kByteOffset;
+
+  Local<v8::ArrayBuffer> array_buffer =
+      v8::ArrayBuffer::New(data, sizeof(data));
+  Local<v8::DataView> data_view =
+      v8::DataView::New(array_buffer, kByteOffset, kByteLength);
+  HEAP->CollectAllGarbage(i::Heap::kNoGCFlags);
+
+  CHECK_EQ(kByteOffset, data_view->ByteOffset());
+  CHECK_EQ(kByteLength, data_view->ByteLength());
+  CHECK_EQ(static_cast<void*>(data + kByteOffset), data_view->Data());
+
+  data_view->SetUint32(0, 0x12345678, false);             // Big-endian
+  CHECK_EQ(0x12, data_view->GetUint8(0));
+  CHECK_EQ(0x34, data_view->GetUint8(1));
+  CHECK_EQ(0x56, data_view->GetUint8(2));
+  CHECK_EQ(0x78, data_view->GetUint8(3));
+  CHECK_EQ(0x1234, data_view->GetUint16(0));              // Big-endian
+  CHECK_EQ(0x5678, data_view->GetUint16(2));              // Big-endian
+  CHECK_EQ(0x1234, data_view->GetUint16(0, false));       // Big-endian
+  CHECK_EQ(0x3412, data_view->GetUint16(0, true));        // Little-endian
+  CHECK_EQ(0x5678, data_view->GetUint16(2, false));       // Big-endian
+  CHECK_EQ(0x7856, data_view->GetUint16(2, true));        // Little-endian
+  CHECK_EQ(0x12345678, data_view->GetUint32(0));          // Big-endian
+  CHECK_EQ(0x12345678, data_view->GetUint32(0, false));   // Big-endian
+  CHECK_EQ(0x78563412, data_view->GetUint32(0, true));    // Little-endian
+
+  data_view->SetUint32(0, 0x12345678, true);              // Little-endian
+  CHECK_EQ(0x78, data_view->GetUint8(0));
+  CHECK_EQ(0x56, data_view->GetUint8(1));
+  CHECK_EQ(0x34, data_view->GetUint8(2));
+  CHECK_EQ(0x12, data_view->GetUint8(3));
+  CHECK_EQ(0x7856, data_view->GetUint16(0));              // Big-endian
+  CHECK_EQ(0x3412, data_view->GetUint16(2));              // Big-endian
+  CHECK_EQ(0x7856, data_view->GetUint16(0, false));       // Big-endian
+  CHECK_EQ(0x5678, data_view->GetUint16(0, true));        // Little-endian
+  CHECK_EQ(0x3412, data_view->GetUint16(2, false));       // Big-endian
+  CHECK_EQ(0x1234, data_view->GetUint16(2, true));        // Little-endian
+  CHECK_EQ(0x78563412, data_view->GetUint32(0));          // Big-endian.
+  CHECK_EQ(0x78563412, data_view->GetUint32(0, false));   // Big-endian.
+  CHECK_EQ(0x12345678, data_view->GetUint32(0, true));    // Little-endian.
+
+  data_view->SetFloat32(0, 123.456f);
+  data_view->SetFloat64(4, 123.456);
+  CHECK_EQ(123.456f, data_view->GetFloat32(0));
+  CHECK_EQ(123.456, data_view->GetFloat64(4));
+}
+
+
 THREADED_TEST(HiddenProperties) {
   LocalContext env;
   v8::HandleScope scope(env->GetIsolate());

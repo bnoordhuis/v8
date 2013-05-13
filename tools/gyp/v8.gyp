@@ -804,6 +804,7 @@
           '../../src/collection.js',
           '../../src/object-observe.js',
           '../../src/arraybuffer.js',
+          '../../src/dataview.js',
           '../../src/typedarray.js',
           '../../src/generator.js'
         ],

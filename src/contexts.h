@@ -125,6 +125,7 @@ enum BindingFlags {
   V(INSTANTIATE_FUN_INDEX, JSFunction, instantiate_fun) \
   V(CONFIGURE_INSTANCE_FUN_INDEX, JSFunction, configure_instance_fun) \
   V(ARRAY_BUFFER_FUN_INDEX, JSFunction, array_buffer_fun) \
+  V(DATA_VIEW_FUN_INDEX, JSFunction, data_view_fun) \
   V(UINT8_ARRAY_FUN_INDEX, JSFunction, uint8_array_fun) \
   V(INT8_ARRAY_FUN_INDEX, JSFunction, int8_array_fun) \
   V(UINT16_ARRAY_FUN_INDEX, JSFunction, uint16_array_fun) \
@@ -285,6 +286,7 @@ class Context: public FixedArray {
     INSTANTIATE_FUN_INDEX,
     CONFIGURE_INSTANCE_FUN_INDEX,
     ARRAY_BUFFER_FUN_INDEX,
+    DATA_VIEW_FUN_INDEX,
     UINT8_ARRAY_FUN_INDEX,
     INT8_ARRAY_FUN_INDEX,
     UINT16_ARRAY_FUN_INDEX,

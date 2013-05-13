@@ -682,6 +682,7 @@ bool Object::IsBoolean() {
 
 TYPE_CHECKER(JSArray, JS_ARRAY_TYPE)
 TYPE_CHECKER(JSArrayBuffer, JS_ARRAY_BUFFER_TYPE)
+TYPE_CHECKER(JSDataView, JS_DATA_VIEW_TYPE)
 TYPE_CHECKER(JSTypedArray, JS_TYPED_ARRAY_TYPE)
 TYPE_CHECKER(JSRegExp, JS_REGEXP_TYPE)
 
@@ -1644,6 +1645,8 @@ int JSObject::GetHeaderSize() {
       return JSArray::kSize;
     case JS_ARRAY_BUFFER_TYPE:
       return JSArrayBuffer::kSize;
+    case JS_DATA_VIEW_TYPE:
+      return JSDataView::kSize;
     case JS_TYPED_ARRAY_TYPE:
       return JSTypedArray::kSize;
     case JS_SET_TYPE:
@@ -2548,6 +2551,7 @@ CAST_ACCESSOR(JSBuiltinsObject)
 CAST_ACCESSOR(Code)
 CAST_ACCESSOR(JSArray)
 CAST_ACCESSOR(JSArrayBuffer)
+CAST_ACCESSOR(JSDataView)
 CAST_ACCESSOR(JSTypedArray)
 CAST_ACCESSOR(JSRegExp)
 CAST_ACCESSOR(JSProxy)
@@ -5319,6 +5323,11 @@ bool JSArrayBuffer::is_external() {
 void JSArrayBuffer::set_is_external(bool value) {
   set_flag(BooleanBit::set(flag(), kIsExternalBit, value));
 }
+
+
+ACCESSORS(JSDataView, buffer, Object, kBufferOffset)
+ACCESSORS(JSDataView, byte_offset, Object, kByteOffsetOffset)
+ACCESSORS(JSDataView, byte_length, Object, kByteLengthOffset)
 
 
 ACCESSORS(JSTypedArray, buffer, Object, kBufferOffset)

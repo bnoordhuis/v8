@@ -57,6 +57,7 @@
 //         - JSObject
 //           - JSArray
 //           - JSArrayBuffer
+//           - JSDataView
 //           - JSTypedArray
 //           - JSSet
 //           - JSMap
@@ -401,6 +402,7 @@ const int kStubMinorKeyBits = kBitsPerInt - kSmiTagSize - kStubMajorKeyBits;
   V(JS_GLOBAL_PROXY_TYPE)                                                      \
   V(JS_ARRAY_TYPE)                                                             \
   V(JS_ARRAY_BUFFER_TYPE)                                                      \
+  V(JS_DATA_VIEW_TYPE)                                                         \
   V(JS_TYPED_ARRAY_TYPE)                                                       \
   V(JS_PROXY_TYPE)                                                             \
   V(JS_WEAK_MAP_TYPE)                                                          \
@@ -734,6 +736,7 @@ enum InstanceType {
   JS_GLOBAL_PROXY_TYPE,
   JS_ARRAY_TYPE,
   JS_ARRAY_BUFFER_TYPE,
+  JS_DATA_VIEW_TYPE,
   JS_TYPED_ARRAY_TYPE,
   JS_SET_TYPE,
   JS_MAP_TYPE,
@@ -982,6 +985,7 @@ class MaybeObject BASE_EMBEDDED {
   V(Boolean)                                   \
   V(JSArray)                                   \
   V(JSArrayBuffer)                             \
+  V(JSDataView)                                \
   V(JSTypedArray)                              \
   V(JSProxy)                                   \
   V(JSFunctionProxy)                           \
@@ -8790,6 +8794,34 @@ class JSArrayBuffer: public JSObject {
   static const int kIsExternalBit = 0;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(JSArrayBuffer);
+};
+
+
+class JSDataView: public JSObject {
+ public:
+  // [buffer]: ArrayBuffer that this data view views.
+  DECL_ACCESSORS(buffer, Object)
+
+  // [byte_length]: offset of data view in bytes.
+  DECL_ACCESSORS(byte_offset, Object)
+
+  // [byte_length]: length of data view in bytes.
+  DECL_ACCESSORS(byte_length, Object)
+
+  // Casting.
+  static inline JSDataView* cast(Object* obj);
+
+  // Dispatched behavior.
+  DECLARE_PRINTER(JSDataView)
+  DECLARE_VERIFIER(JSDataView)
+
+  static const int kBufferOffset = JSObject::kHeaderSize;
+  static const int kByteOffsetOffset = kBufferOffset + kPointerSize;
+  static const int kByteLengthOffset = kByteOffsetOffset + kPointerSize;
+  static const int kSize = kByteLengthOffset + kPointerSize;
+
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(JSDataView);
 };
 
 

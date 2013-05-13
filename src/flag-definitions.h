@@ -168,6 +168,10 @@ DEFINE_bool(harmony_typed_arrays, false,
             "enable harmony typed arrays")
 DEFINE_bool(harmony_array_buffer, false,
             "enable harmony array buffer")
+DEFINE_bool(harmony_data_view, false,
+            "enable harmony data view")
+DEFINE_implication(harmony_data_view, harmony_array_buffer)
+DEFINE_implication(harmony_typed_arrays, harmony_data_view)
 DEFINE_implication(harmony_typed_arrays, harmony_array_buffer)
 DEFINE_bool(harmony_generators, false, "enable harmony generators")
 DEFINE_bool(harmony, false, "enable all harmony features (except typeof)")

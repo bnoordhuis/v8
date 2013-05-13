@@ -320,6 +320,8 @@ class Factory {
 
   Handle<JSArrayBuffer> NewJSArrayBuffer();
 
+  Handle<JSDataView> NewJSDataView();
+
   Handle<JSTypedArray> NewJSTypedArray(ExternalArrayType type);
 
   Handle<JSProxy> NewJSProxy(Handle<Object> handler, Handle<Object> prototype);

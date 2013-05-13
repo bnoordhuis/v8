@@ -1329,6 +1329,16 @@ void Genesis::InitializeExperimentalGlobal() {
     native_context()->set_array_buffer_fun(*array_buffer_fun);
   }
 
+  if (FLAG_harmony_data_view) {
+    // -- D a t a V i e w
+    Handle<JSFunction> data_view_fun =
+        InstallFunction(global, "DataView", JS_DATA_VIEW_TYPE,
+                        JSDataView::kSize,
+                        isolate()->initial_object_prototype(),
+                        Builtins::kIllegal, true, true);
+    native_context()->set_data_view_fun(*data_view_fun);
+  }
+
   if (FLAG_harmony_typed_arrays) {
     // -- T y p e d A r r a y s
     Handle<JSFunction> int8_fun = InstallTypedArray("Int8Array",
@@ -2035,6 +2045,11 @@ bool Genesis::InstallExperimentalNatives() {
     if (FLAG_harmony_array_buffer &&
         strcmp(ExperimentalNatives::GetScriptName(i).start(),
                "native arraybuffer.js") == 0) {
+      if (!CompileExperimentalBuiltin(isolate(), i)) return false;
+    }
+    if (FLAG_harmony_data_view &&
+        strcmp(ExperimentalNatives::GetScriptName(i).start(),
+               "native dataview.js") == 0) {
       if (!CompileExperimentalBuiltin(isolate(), i)) return false;
     }
     if (FLAG_harmony_typed_arrays &&

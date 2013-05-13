@@ -777,6 +777,114 @@ RUNTIME_FUNCTION(MaybeObject*, Runtime_ArrayBufferSliceImpl) {
 }
 
 
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewInitialize) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 4);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_ARG_HANDLE_CHECKED(JSArrayBuffer, buffer, 1);
+  CONVERT_ARG_HANDLE_CHECKED(Object, byte_offset_object, 2);
+  CONVERT_ARG_HANDLE_CHECKED(Object, byte_length_object, 3);
+
+  holder->set_buffer(*buffer);
+  holder->set_byte_offset(*byte_offset_object);
+  holder->set_byte_length(*byte_length_object);
+
+  Handle<Map> map =
+      isolate->factory()->GetElementsTransitionMap(
+          holder, EXTERNAL_UNSIGNED_BYTE_ELEMENTS);
+  holder->set_map(*map);
+  return isolate->heap()->undefined_value();
+}
+
+
+#define DATA_VIEW_GETTER(getter, accessor)                                    \
+  RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewGet##getter) {               \
+    HandleScope scope(isolate);                                               \
+    ASSERT(args.length() == 1);                                               \
+    CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);                        \
+    return (*holder)->accessor();                                             \
+  }
+
+#define DATA_VIEW_GETTER_SWIZZLE(FunctionName, TypeName, ReturnValue)         \
+  RUNTIME_FUNCTION(MaybeObject*, Runtime_DataView ## FunctionName) {          \
+    HandleScope scope(isolate);                                               \
+    ASSERT(args.length() == 3);                                               \
+    CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);                        \
+    CONVERT_SMI_ARG_CHECKED(byte_offset, 1);                                  \
+    CONVERT_BOOLEAN_ARG_CHECKED(little_endian, 2);                            \
+    ASSERT(byte_offset >= 0);                                                 \
+    Handle<JSArrayBuffer> buffer(JSArrayBuffer::cast(holder->buffer()));      \
+    ASSERT(byte_offset + sizeof(TypeName) <= buffer->byte_length()->Number());\
+    const char* data = static_cast<const char*>(buffer->backing_store()) +    \
+                       static_cast<size_t>(holder->byte_offset()->Number()) + \
+                       byte_offset;                                           \
+    TypeName value;                                                           \
+    OS::MemCopy(&value, data, sizeof(value));                                 \
+    /* Swizzle only when native endianness differs from requested one. */     \
+    if (little_endian ^ IsLittleEndian()) Swizzle(&value);                    \
+    return ReturnValue;                                                       \
+  }
+
+#define DATA_VIEW_SETTER_SWIZZLE(FunctionName, TypeName)                      \
+  RUNTIME_FUNCTION(MaybeObject*, Runtime_DataView ## FunctionName) {          \
+    HandleScope scope(isolate);                                               \
+    ASSERT(args.length() == 4);                                               \
+    CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);                        \
+    CONVERT_SMI_ARG_CHECKED(byte_offset, 1);                                  \
+    TypeName value;                                                           \
+    if (args[2]->IsSmi()) {                                                   \
+      value = args.smi_at(2);                                                 \
+    } else {                                                                  \
+      RUNTIME_ASSERT(args[2]->IsNumber());                                    \
+      value = args.number_at(2);                                              \
+    }                                                                         \
+    CONVERT_BOOLEAN_ARG_CHECKED(little_endian, 3);                            \
+    ASSERT(byte_offset >= 0);                                                 \
+    Handle<JSArrayBuffer> buffer(JSArrayBuffer::cast(holder->buffer()));      \
+    ASSERT(byte_offset + sizeof(TypeName) <= buffer->byte_length()->Number());\
+    char* data = static_cast<char*>(buffer->backing_store()) +                \
+                 static_cast<size_t>(holder->byte_offset()->Number()) +       \
+                 byte_offset;                                                 \
+    /* Swizzle only when native endianness differs from requested one. */     \
+    if (little_endian ^ IsLittleEndian()) Swizzle(&value);                    \
+    OS::MemCopy(data, &value, sizeof(value));                                 \
+    return isolate->heap()->undefined_value();                                \
+  }
+
+DATA_VIEW_GETTER(Buffer, buffer)
+DATA_VIEW_GETTER(ByteLength, byte_length)
+DATA_VIEW_GETTER(ByteOffset, byte_offset)
+
+DATA_VIEW_GETTER_SWIZZLE(GetInt8, int8_t, Smi::FromInt(value))
+DATA_VIEW_GETTER_SWIZZLE(GetUint8, uint8_t, Smi::FromInt(value))
+DATA_VIEW_GETTER_SWIZZLE(GetInt16, int16_t, Smi::FromInt(value))
+DATA_VIEW_GETTER_SWIZZLE(GetUint16, uint16_t, Smi::FromInt(value))
+DATA_VIEW_GETTER_SWIZZLE(GetInt32,
+                         int32_t,
+                         isolate->heap()->NumberFromInt32(value))
+DATA_VIEW_GETTER_SWIZZLE(GetUint32,
+                         uint32_t,
+                         isolate->heap()->NumberFromUint32(value))
+DATA_VIEW_GETTER_SWIZZLE(GetFloat32,
+                         float,
+                         isolate->heap()->NumberFromDouble(value))
+DATA_VIEW_GETTER_SWIZZLE(GetFloat64,
+                         double,
+                         isolate->heap()->NumberFromDouble(value))
+
+DATA_VIEW_SETTER_SWIZZLE(SetInt8, int8_t)
+DATA_VIEW_SETTER_SWIZZLE(SetUint8, uint8_t)
+DATA_VIEW_SETTER_SWIZZLE(SetInt16, int16_t)
+DATA_VIEW_SETTER_SWIZZLE(SetUint16, uint16_t)
+DATA_VIEW_SETTER_SWIZZLE(SetInt32, int32_t)
+DATA_VIEW_SETTER_SWIZZLE(SetUint32, uint32_t)
+DATA_VIEW_SETTER_SWIZZLE(SetFloat32, float)
+DATA_VIEW_SETTER_SWIZZLE(SetFloat64, double)
+
+#undef DATA_VIEW_SETTER_SWIZZLE
+#undef DATA_VIEW_GETTER_SWIZZLE
+#undef DATA_VIEW_GETTER
+
 enum TypedArrayId {
   // arrayIds below should be synchromized with typedarray.js natives.
   ARRAY_ID_UINT8 = 1,
