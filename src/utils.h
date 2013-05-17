@@ -246,6 +246,18 @@ inline int StrLength(const char* string) {
 }
 
 
+template <typename T>
+inline void Swizzle(T* value) {
+  char* start = reinterpret_cast<char*>(value);
+  char* end = start + sizeof(*value);
+  while (start < end) {
+    char t = *start;
+    *start++ = *end;
+    *end-- = t;
+  }
+}
+
+
 // ----------------------------------------------------------------------------
 // BitField is a help template for encoding and decode bitfield with
 // unsigned content.
