@@ -749,8 +749,7 @@ void JSArrayBuffer::JSArrayBufferVerify() {
   CHECK(IsJSArrayBuffer());
   JSObjectVerify();
   VerifyPointer(byte_length());
-  CHECK(byte_length()->IsSmi() || byte_length()->IsHeapNumber()
-        || byte_length()->IsUndefined());
+  CHECK(byte_length()->IsNumber() || byte_length()->IsUndefined());
 }
 
 
@@ -762,12 +761,10 @@ void JSDataView::JSDataViewVerify() {
   CHECK(buffer()->IsJSArrayBuffer() || buffer()->IsUndefined());
 
   VerifyPointer(byte_offset());
-  CHECK(byte_offset()->IsSmi() || byte_offset()->IsHeapNumber()
-        || byte_offset()->IsUndefined());
+  CHECK(byte_offset()->IsNumber() || byte_offset()->IsUndefined());
 
   VerifyPointer(byte_length());
-  CHECK(byte_length()->IsSmi() || byte_length()->IsHeapNumber()
-        || byte_length()->IsUndefined());
+  CHECK(byte_length()->IsNumber() || byte_length()->IsUndefined());
 
   VerifyPointer(elements());
 }
@@ -780,16 +777,13 @@ void JSTypedArray::JSTypedArrayVerify() {
   CHECK(buffer()->IsJSArrayBuffer() || buffer()->IsUndefined());
 
   VerifyPointer(byte_offset());
-  CHECK(byte_offset()->IsSmi() || byte_offset()->IsHeapNumber()
-        || byte_offset()->IsUndefined());
+  CHECK(byte_offset()->IsNumber() || byte_offset()->IsUndefined());
 
   VerifyPointer(byte_length());
-  CHECK(byte_length()->IsSmi() || byte_length()->IsHeapNumber()
-        || byte_length()->IsUndefined());
+  CHECK(byte_length()->IsNumber() || byte_length()->IsUndefined());
 
   VerifyPointer(length());
-  CHECK(length()->IsSmi() || length()->IsHeapNumber()
-        || length()->IsUndefined());
+  CHECK(length()->IsNumber() || length()->IsUndefined());
 
   VerifyPointer(elements());
 }
