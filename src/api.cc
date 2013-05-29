@@ -6148,100 +6148,144 @@ void* v8::DataView::Data() const {
 }
 
 
-#define DATA_VIEW_GETTER(FunctionName, TypeName)                              \
-  TypeName v8::DataView::FunctionName(size_t byte_offset) const {             \
-    i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();              \
-    if (IsDeadCheck(isolate, "v8::DataView::" # FunctionName)) return 0;      \
-    i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);                   \
-    size_t byte_length = static_cast<size_t>(obj->byte_length()->Number());   \
-    if (byte_offset + sizeof(TypeName) > byte_length) return 0;               \
-    if (byte_offset + sizeof(TypeName) < byte_offset) return 0;               \
-    i::Handle<i::JSArrayBuffer> buffer(                                       \
-        i::JSArrayBuffer::cast(obj->buffer()));                               \
-    uint8_t* data = static_cast<uint8_t*>(buffer->backing_store()) +          \
-                    static_cast<size_t>(obj->byte_offset()->Number()) +       \
-                    byte_offset;                                              \
-    return *reinterpret_cast<TypeName*>(data);                                \
-  }
-
-#define DATA_VIEW_GETTER_SWIZZLE(FunctionName, TypeName)                      \
-  TypeName v8::DataView::FunctionName(size_t byte_offset,                     \
-                                      bool little_endian) const {             \
-    i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();              \
-    if (IsDeadCheck(isolate, "v8::DataView::" # FunctionName)) return 0;      \
-    i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);                   \
-    size_t byte_length = static_cast<size_t>(obj->byte_length()->Number());   \
-    if (byte_offset + sizeof(TypeName) > byte_length) return 0;               \
-    if (byte_offset + sizeof(TypeName) < byte_offset) return 0;               \
-    i::Handle<i::JSArrayBuffer> buffer(                                       \
-        i::JSArrayBuffer::cast(obj->buffer()));                               \
-    uint8_t* data = static_cast<uint8_t*>(buffer->backing_store()) +          \
-                    static_cast<size_t>(obj->byte_offset()->Number()) +       \
-                    byte_offset;                                              \
-    TypeName value;                                                           \
-    i::OS::MemCopy(&value, data, sizeof(value));                              \
-    if (little_endian ^ i::IsLittleEndian()) i::Swizzle(&value);              \
-    return value;                                                             \
-  }
-
-#define DATA_VIEW_SETTER(FunctionName, TypeName)                              \
-  void v8::DataView::FunctionName(size_t byte_offset, TypeName value) {       \
-    i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();              \
-    if (IsDeadCheck(isolate, "v8::DataView::" # FunctionName)) return;        \
-    i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);                   \
-    size_t byte_length = static_cast<size_t>(obj->byte_length()->Number());   \
-    if (byte_offset + sizeof(TypeName) > byte_length) return;                 \
-    if (byte_offset + sizeof(TypeName) < byte_offset) return;                 \
-    i::Handle<i::JSArrayBuffer> buffer(                                       \
-        i::JSArrayBuffer::cast(obj->buffer()));                               \
-    uint8_t* data = static_cast<uint8_t*>(buffer->backing_store()) +          \
-                    static_cast<size_t>(obj->byte_offset()->Number()) +       \
-                    byte_offset;                                              \
-    i::OS::MemCopy(data, &value, sizeof(value));                              \
-  }
+int8_t v8::DataView::GetInt8(size_t byte_offset) const {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  if (IsDeadCheck(isolate, "v8::DataView::GetInt8")) return 0;
+  i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);
+  return obj->Get<int8_t>(byte_offset);
+}
 
 
-#define DATA_VIEW_SETTER_SWIZZLE(FunctionName, TypeName)                      \
-  void v8::DataView::FunctionName(size_t byte_offset,                         \
-                                  TypeName value,                             \
-                                  bool little_endian) {                       \
-    i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();              \
-    if (IsDeadCheck(isolate, "v8::DataView::" # FunctionName)) return;        \
-    i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);                   \
-    size_t byte_length = static_cast<size_t>(obj->byte_length()->Number());   \
-    if (byte_offset + sizeof(TypeName) > byte_length) return;                 \
-    if (byte_offset + sizeof(TypeName) < byte_offset) return;                 \
-    i::Handle<i::JSArrayBuffer> buffer(                                       \
-        i::JSArrayBuffer::cast(obj->buffer()));                               \
-    uint8_t* data = static_cast<uint8_t*>(buffer->backing_store()) +          \
-                    static_cast<size_t>(obj->byte_offset()->Number()) +       \
-                    byte_offset;                                              \
-    if (little_endian ^ i::IsLittleEndian()) i::Swizzle(&value);              \
-    i::OS::MemCopy(data, &value, sizeof(value));                              \
-  }
+uint8_t v8::DataView::GetUint8(size_t byte_offset) const {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  if (IsDeadCheck(isolate, "v8::DataView::GetUint8")) return 0;
+  i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);
+  return obj->Get<uint8_t>(byte_offset);
+}
 
-DATA_VIEW_GETTER(GetInt8, int8_t)
-DATA_VIEW_GETTER(GetUint8, uint8_t)
-DATA_VIEW_GETTER_SWIZZLE(GetInt16, int16_t)
-DATA_VIEW_GETTER_SWIZZLE(GetUint16, uint16_t)
-DATA_VIEW_GETTER_SWIZZLE(GetInt32, int32_t)
-DATA_VIEW_GETTER_SWIZZLE(GetUint32, uint32_t)
-DATA_VIEW_GETTER_SWIZZLE(GetFloat32, float)
-DATA_VIEW_GETTER_SWIZZLE(GetFloat64, double)
 
-DATA_VIEW_SETTER(SetInt8, int8_t)
-DATA_VIEW_SETTER(SetUint8, uint8_t)
-DATA_VIEW_SETTER_SWIZZLE(SetInt16, int16_t)
-DATA_VIEW_SETTER_SWIZZLE(SetUint16, uint16_t)
-DATA_VIEW_SETTER_SWIZZLE(SetInt32, int32_t)
-DATA_VIEW_SETTER_SWIZZLE(SetUint32, uint32_t)
-DATA_VIEW_SETTER_SWIZZLE(SetFloat32, float)
-DATA_VIEW_SETTER_SWIZZLE(SetFloat64, double)
+int16_t v8::DataView::GetInt16(size_t byte_offset, bool little_endian) const {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  if (IsDeadCheck(isolate, "v8::DataView::GetInt16")) return 0;
+  i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);
+  return obj->Get<int16_t>(byte_offset, little_endian);
+}
 
-#undef DATA_VIEW_GETTER_SWIZZLE
-#undef DATA_VIEW_SETTER_SWIZZLE
-#undef DATA_VIEW_GETTER
-#undef DATA_VIEW_SETTER
+
+uint16_t v8::DataView::GetUint16(size_t byte_offset, bool little_endian) const {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  if (IsDeadCheck(isolate, "v8::DataView::GetUint16")) return 0;
+  i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);
+  return obj->Get<uint16_t>(byte_offset, little_endian);
+}
+
+
+int32_t v8::DataView::GetInt32(size_t byte_offset, bool little_endian) const {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  if (IsDeadCheck(isolate, "v8::DataView::GetInt32")) return 0;
+  i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);
+  return obj->Get<int32_t>(byte_offset, little_endian);
+}
+
+
+uint32_t v8::DataView::GetUint32(size_t byte_offset, bool little_endian) const {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  if (IsDeadCheck(isolate, "v8::DataView::GetUint32")) return 0;
+  i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);
+  return obj->Get<uint32_t>(byte_offset, little_endian);
+}
+
+
+float v8::DataView::GetFloat32(size_t byte_offset, bool little_endian) const {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  if (IsDeadCheck(isolate, "v8::DataView::GetFloat32")) return 0;
+  i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);
+  return obj->Get<float>(byte_offset, little_endian);
+}
+
+
+double v8::DataView::GetFloat64(size_t byte_offset, bool little_endian) const {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  if (IsDeadCheck(isolate, "v8::DataView::GetFloat64")) return 0;
+  i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);
+  return obj->Get<double>(byte_offset, little_endian);
+}
+
+
+void v8::DataView::SetInt8(size_t byte_offset, int8_t value) {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  if (IsDeadCheck(isolate, "v8::DataView::SetInt8")) return;
+  i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);
+  obj->Set(byte_offset, value);
+}
+
+
+void v8::DataView::SetUint8(size_t byte_offset, uint8_t value) {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  if (IsDeadCheck(isolate, "v8::DataView::SetUint8")) return;
+  i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);
+  obj->Set(byte_offset, value);
+}
+
+
+void v8::DataView::SetInt16(size_t byte_offset,
+                            int16_t value,
+                            bool little_endian) {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  if (IsDeadCheck(isolate, "v8::DataView::SetInt16")) return;
+  i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);
+  obj->Set(byte_offset, value, little_endian);
+}
+
+
+void v8::DataView::SetUint16(size_t byte_offset,
+                             uint16_t value,
+                             bool little_endian) {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  if (IsDeadCheck(isolate, "v8::DataView::SetUint16")) return;
+  i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);
+  obj->Set(byte_offset, value, little_endian);
+}
+
+
+void v8::DataView::SetInt32(size_t byte_offset,
+                            int32_t value,
+                            bool little_endian) {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  if (IsDeadCheck(isolate, "v8::DataView::SetInt32")) return;
+  i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);
+  obj->Set(byte_offset, value, little_endian);
+}
+
+
+void v8::DataView::SetUint32(size_t byte_offset,
+                             uint32_t value,
+                             bool little_endian) {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  if (IsDeadCheck(isolate, "v8::DataView::SetUint32")) return;
+  i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);
+  obj->Set(byte_offset, value, little_endian);
+}
+
+
+void v8::DataView::SetFloat32(size_t byte_offset,
+                              float value,
+                              bool little_endian) {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  if (IsDeadCheck(isolate, "v8::DataView::SetFloat32")) return;
+  i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);
+  obj->Set(byte_offset, value, little_endian);
+}
+
+
+void v8::DataView::SetFloat64(size_t byte_offset,
+                              double value,
+                              bool little_endian) {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  if (IsDeadCheck(isolate, "v8::DataView::SetFloat64")) return;
+  i::Handle<i::JSDataView> obj = Utils::OpenHandle(this);
+  obj->Set(byte_offset, value, little_endian);
+}
 
 
 Local<ArrayBuffer> v8::TypedArray::Buffer() {

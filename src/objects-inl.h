@@ -5330,6 +5330,40 @@ ACCESSORS(JSDataView, byte_offset, Object, kByteOffsetOffset)
 ACCESSORS(JSDataView, byte_length, Object, kByteLengthOffset)
 
 
+template <typename TypeName>
+TypeName JSDataView::Get(size_t byte_offset, bool little_endian) {
+  size_t byte_length = static_cast<size_t>(this->byte_length()->Number());
+  if (byte_offset + sizeof(TypeName) > byte_length) return 0;
+  if (byte_offset + sizeof(TypeName) < byte_offset) return 0;  // Overflow.
+  Handle<JSArrayBuffer> buffer(JSArrayBuffer::cast(this->buffer()));
+  const char* data = static_cast<const char*>(buffer->backing_store()) +
+                     static_cast<size_t>(this->byte_offset()->Number()) +
+                     byte_offset;
+  TypeName value;
+  OS::MemCopy(&value, data, sizeof(value));
+  if (sizeof(TypeName) > 1 && little_endian ^ IsLittleEndian()) {
+    Swizzle(&value);
+  }
+  return value;
+}
+
+
+template <typename TypeName>
+void JSDataView::Set(size_t byte_offset, TypeName value, bool little_endian) {
+  size_t byte_length = static_cast<size_t>(this->byte_length()->Number());
+  if (byte_offset + sizeof(TypeName) > byte_length) return;
+  if (byte_offset + sizeof(TypeName) < byte_offset) return;  // Overflow.
+  Handle<JSArrayBuffer> buffer(JSArrayBuffer::cast(this->buffer()));
+  char* data = static_cast<char*>(buffer->backing_store()) +
+               static_cast<size_t>(this->byte_offset()->Number()) +
+               byte_offset;
+  if (sizeof(TypeName) > 1 && little_endian ^ IsLittleEndian()) {
+    Swizzle(&value);
+  }
+  OS::MemCopy(data, &value, sizeof(value));
+}
+
+
 ACCESSORS(JSTypedArray, buffer, Object, kBufferOffset)
 ACCESSORS(JSTypedArray, byte_offset, Object, kByteOffsetOffset)
 ACCESSORS(JSTypedArray, byte_length, Object, kByteLengthOffset)

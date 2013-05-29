@@ -797,93 +797,221 @@ RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewInitialize) {
 }
 
 
-#define DATA_VIEW_GETTER(getter, accessor)                                    \
-  RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewGet##getter) {               \
-    HandleScope scope(isolate);                                               \
-    ASSERT(args.length() == 1);                                               \
-    CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);                        \
-    return (*holder)->accessor();                                             \
-  }
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewGetBuffer) {
+    HandleScope scope(isolate);
+    ASSERT(args.length() == 1);
+    CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+    return (*holder)->buffer();
+}
 
-#define DATA_VIEW_GETTER_SWIZZLE(FunctionName, TypeName, ReturnValue)         \
-  RUNTIME_FUNCTION(MaybeObject*, Runtime_DataView ## FunctionName) {          \
-    HandleScope scope(isolate);                                               \
-    ASSERT(args.length() == 3);                                               \
-    CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);                        \
-    CONVERT_SMI_ARG_CHECKED(byte_offset, 1);                                  \
-    CONVERT_BOOLEAN_ARG_CHECKED(little_endian, 2);                            \
-    ASSERT(byte_offset >= 0);                                                 \
-    Handle<JSArrayBuffer> buffer(JSArrayBuffer::cast(holder->buffer()));      \
-    ASSERT(byte_offset + sizeof(TypeName) <= buffer->byte_length()->Number());\
-    const char* data = static_cast<const char*>(buffer->backing_store()) +    \
-                       static_cast<size_t>(holder->byte_offset()->Number()) + \
-                       byte_offset;                                           \
-    TypeName value;                                                           \
-    OS::MemCopy(&value, data, sizeof(value));                                 \
-    /* Swizzle only when native endianness differs from requested one. */     \
-    if (little_endian ^ IsLittleEndian()) Swizzle(&value);                    \
-    return ReturnValue;                                                       \
-  }
 
-#define DATA_VIEW_SETTER_SWIZZLE(FunctionName, TypeName)                      \
-  RUNTIME_FUNCTION(MaybeObject*, Runtime_DataView ## FunctionName) {          \
-    HandleScope scope(isolate);                                               \
-    ASSERT(args.length() == 4);                                               \
-    CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);                        \
-    CONVERT_SMI_ARG_CHECKED(byte_offset, 1);                                  \
-    TypeName value;                                                           \
-    if (args[2]->IsSmi()) {                                                   \
-      value = args.smi_at(2);                                                 \
-    } else {                                                                  \
-      RUNTIME_ASSERT(args[2]->IsNumber());                                    \
-      value = args.number_at(2);                                              \
-    }                                                                         \
-    CONVERT_BOOLEAN_ARG_CHECKED(little_endian, 3);                            \
-    ASSERT(byte_offset >= 0);                                                 \
-    Handle<JSArrayBuffer> buffer(JSArrayBuffer::cast(holder->buffer()));      \
-    ASSERT(byte_offset + sizeof(TypeName) <= buffer->byte_length()->Number());\
-    char* data = static_cast<char*>(buffer->backing_store()) +                \
-                 static_cast<size_t>(holder->byte_offset()->Number()) +       \
-                 byte_offset;                                                 \
-    /* Swizzle only when native endianness differs from requested one. */     \
-    if (little_endian ^ IsLittleEndian()) Swizzle(&value);                    \
-    OS::MemCopy(data, &value, sizeof(value));                                 \
-    return isolate->heap()->undefined_value();                                \
-  }
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewGetByteLength) {
+    HandleScope scope(isolate);
+    ASSERT(args.length() == 1);
+    CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+    return (*holder)->byte_length();
+}
 
-DATA_VIEW_GETTER(Buffer, buffer)
-DATA_VIEW_GETTER(ByteLength, byte_length)
-DATA_VIEW_GETTER(ByteOffset, byte_offset)
 
-DATA_VIEW_GETTER_SWIZZLE(GetInt8, int8_t, Smi::FromInt(value))
-DATA_VIEW_GETTER_SWIZZLE(GetUint8, uint8_t, Smi::FromInt(value))
-DATA_VIEW_GETTER_SWIZZLE(GetInt16, int16_t, Smi::FromInt(value))
-DATA_VIEW_GETTER_SWIZZLE(GetUint16, uint16_t, Smi::FromInt(value))
-DATA_VIEW_GETTER_SWIZZLE(GetInt32,
-                         int32_t,
-                         isolate->heap()->NumberFromInt32(value))
-DATA_VIEW_GETTER_SWIZZLE(GetUint32,
-                         uint32_t,
-                         isolate->heap()->NumberFromUint32(value))
-DATA_VIEW_GETTER_SWIZZLE(GetFloat32,
-                         float,
-                         isolate->heap()->NumberFromDouble(value))
-DATA_VIEW_GETTER_SWIZZLE(GetFloat64,
-                         double,
-                         isolate->heap()->NumberFromDouble(value))
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewGetByteOffset) {
+    HandleScope scope(isolate);
+    ASSERT(args.length() == 1);
+    CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+    return (*holder)->byte_offset();
+}
 
-DATA_VIEW_SETTER_SWIZZLE(SetInt8, int8_t)
-DATA_VIEW_SETTER_SWIZZLE(SetUint8, uint8_t)
-DATA_VIEW_SETTER_SWIZZLE(SetInt16, int16_t)
-DATA_VIEW_SETTER_SWIZZLE(SetUint16, uint16_t)
-DATA_VIEW_SETTER_SWIZZLE(SetInt32, int32_t)
-DATA_VIEW_SETTER_SWIZZLE(SetUint32, uint32_t)
-DATA_VIEW_SETTER_SWIZZLE(SetFloat32, float)
-DATA_VIEW_SETTER_SWIZZLE(SetFloat64, double)
 
-#undef DATA_VIEW_SETTER_SWIZZLE
-#undef DATA_VIEW_GETTER_SWIZZLE
-#undef DATA_VIEW_GETTER
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewGetInt8) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 2);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_SMI_ARG_CHECKED(byte_offset, 1);
+  ASSERT(byte_offset >= 0);
+  return Smi::FromInt((*holder)->Get<int8_t>(byte_offset));
+}
+
+
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewGetUint8) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 2);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_SMI_ARG_CHECKED(byte_offset, 1);
+  ASSERT(byte_offset >= 0);
+  return Smi::FromInt((*holder)->Get<uint8_t>(byte_offset));
+}
+
+
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewGetInt16) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 3);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_SMI_ARG_CHECKED(byte_offset, 1);
+  ASSERT(byte_offset >= 0);
+  CONVERT_BOOLEAN_ARG_CHECKED(little_endian, 2);
+  return Smi::FromInt((*holder)->Get<int16_t>(byte_offset, little_endian));
+}
+
+
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewGetUint16) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 3);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_SMI_ARG_CHECKED(byte_offset, 1);
+  ASSERT(byte_offset >= 0);
+  CONVERT_BOOLEAN_ARG_CHECKED(little_endian, 2);
+  return Smi::FromInt((*holder)->Get<uint16_t>(byte_offset, little_endian));
+}
+
+
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewGetInt32) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 3);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_SMI_ARG_CHECKED(byte_offset, 1);
+  ASSERT(byte_offset >= 0);
+  CONVERT_BOOLEAN_ARG_CHECKED(little_endian, 2);
+  return isolate->heap()->NumberFromInt32(
+      (*holder)->Get<int32_t>(byte_offset, little_endian));
+}
+
+
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewGetUint32) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 3);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_SMI_ARG_CHECKED(byte_offset, 1);
+  ASSERT(byte_offset >= 0);
+  CONVERT_BOOLEAN_ARG_CHECKED(little_endian, 2);
+  return isolate->heap()->NumberFromUint32(
+      (*holder)->Get<uint32_t>(byte_offset, little_endian));
+}
+
+
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewGetFloat32) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 3);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_SMI_ARG_CHECKED(byte_offset, 1);
+  ASSERT(byte_offset >= 0);
+  CONVERT_BOOLEAN_ARG_CHECKED(little_endian, 2);
+  return isolate->heap()->NumberFromDouble(
+      (*holder)->Get<float>(byte_offset, little_endian));
+}
+
+
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewGetFloat64) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 3);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_SMI_ARG_CHECKED(byte_offset, 1);
+  ASSERT(byte_offset >= 0);
+  CONVERT_BOOLEAN_ARG_CHECKED(little_endian, 2);
+  return isolate->heap()->NumberFromDouble(
+      (*holder)->Get<double>(byte_offset, little_endian));
+}
+
+
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewSetInt8) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 3);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_SMI_ARG_CHECKED(byte_offset, 1);
+  ASSERT(byte_offset >= 0);
+  CONVERT_NUMBER_CHECKED(int8_t, value, Int32, args[2]);
+  (*holder)->Set(byte_offset, value);
+  return isolate->heap()->undefined_value();
+}
+
+
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewSetUint8) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 3);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_SMI_ARG_CHECKED(byte_offset, 1);
+  ASSERT(byte_offset >= 0);
+  CONVERT_NUMBER_CHECKED(uint8_t, value, Uint32, args[2]);
+  (*holder)->Set(byte_offset, value);
+  return isolate->heap()->undefined_value();
+}
+
+
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewSetInt16) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 4);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_SMI_ARG_CHECKED(byte_offset, 1);
+  ASSERT(byte_offset >= 0);
+  CONVERT_NUMBER_CHECKED(int16_t, value, Int32, args[2]);
+  CONVERT_BOOLEAN_ARG_CHECKED(little_endian, 3);
+  (*holder)->Set(byte_offset, value, little_endian);
+  return isolate->heap()->undefined_value();
+}
+
+
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewSetUint16) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 4);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_SMI_ARG_CHECKED(byte_offset, 1);
+  ASSERT(byte_offset >= 0);
+  CONVERT_NUMBER_CHECKED(uint16_t, value, Uint32, args[2]);
+  CONVERT_BOOLEAN_ARG_CHECKED(little_endian, 3);
+  (*holder)->Set(byte_offset, value, little_endian);
+  return isolate->heap()->undefined_value();
+}
+
+
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewSetInt32) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 4);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_SMI_ARG_CHECKED(byte_offset, 1);
+  ASSERT(byte_offset >= 0);
+  CONVERT_NUMBER_CHECKED(int32_t, value, Int32, args[2]);
+  CONVERT_BOOLEAN_ARG_CHECKED(little_endian, 3);
+  (*holder)->Set(byte_offset, value, little_endian);
+  return isolate->heap()->undefined_value();
+}
+
+
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewSetUint32) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 4);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_SMI_ARG_CHECKED(byte_offset, 1);
+  ASSERT(byte_offset >= 0);
+  CONVERT_NUMBER_CHECKED(uint32_t, value, Uint32, args[2]);
+  CONVERT_BOOLEAN_ARG_CHECKED(little_endian, 3);
+  (*holder)->Set(byte_offset, value, little_endian);
+  return isolate->heap()->undefined_value();
+}
+
+
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewSetFloat32) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 4);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_SMI_ARG_CHECKED(byte_offset, 1);
+  ASSERT(byte_offset >= 0);
+  CONVERT_DOUBLE_ARG_CHECKED(value, 2);
+  CONVERT_BOOLEAN_ARG_CHECKED(little_endian, 3);
+  (*holder)->Set(byte_offset, static_cast<float>(value), little_endian);
+  return isolate->heap()->undefined_value();
+}
+
+
+RUNTIME_FUNCTION(MaybeObject*, Runtime_DataViewSetFloat64) {
+  HandleScope scope(isolate);
+  ASSERT(args.length() == 4);
+  CONVERT_ARG_HANDLE_CHECKED(JSDataView, holder, 0);
+  CONVERT_SMI_ARG_CHECKED(byte_offset, 1);
+  ASSERT(byte_offset >= 0);
+  CONVERT_DOUBLE_ARG_CHECKED(value, 2);
+  CONVERT_BOOLEAN_ARG_CHECKED(little_endian, 3);
+  (*holder)->Set(byte_offset, value, little_endian);
+  return isolate->heap()->undefined_value();
+}
+
 
 enum TypedArrayId {
   // arrayIds below should be synchromized with typedarray.js natives.

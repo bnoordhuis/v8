@@ -8815,6 +8815,12 @@ class JSDataView: public JSObject {
   DECLARE_PRINTER(JSDataView)
   DECLARE_VERIFIER(JSDataView)
 
+  template <typename TypeName>
+  TypeName Get(size_t byte_offset, bool little_endian = false);
+
+  template <typename TypeName>
+  void Set(size_t byte_offset, TypeName value, bool little_endian = false);
+
   static const int kBufferOffset = JSObject::kHeaderSize;
   static const int kByteOffsetOffset = kBufferOffset + kPointerSize;
   static const int kByteLengthOffset = kByteOffsetOffset + kPointerSize;

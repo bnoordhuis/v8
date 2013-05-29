@@ -84,7 +84,7 @@ function DataViewGetInt8(byteOffset) {
   if (offset < 0 || offset + 1 > %ArrayBufferGetByteLength(buffer)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
-  return %DataViewGetInt8(this, offset, false);
+  return %DataViewGetInt8(this, offset);
 }
 
 
@@ -97,7 +97,7 @@ function DataViewGetUint8(byteOffset) {
   if (offset < 0 || offset + 1 > %ArrayBufferGetByteLength(buffer)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
-  return %DataViewGetUint8(this, offset, false);
+  return %DataViewGetUint8(this, offset);
 }
 
 
@@ -188,7 +188,7 @@ function DataViewSetInt8(byteOffset, value) {
   if (offset < 0 || offset + 1 > %ArrayBufferGetByteLength(buffer)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
-  return %DataViewSetInt8(this, offset, TO_INT32(value), false);
+  return %DataViewSetInt8(this, offset, TO_INT32(value));
 }
 
 
@@ -201,7 +201,7 @@ function DataViewSetUint8(byteOffset, value) {
   if (offset < 0 || offset + 1 > %ArrayBufferGetByteLength(buffer)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
-  return %DataViewSetUint8(this, offset, TO_UINT32(value), false);
+  return %DataViewSetUint8(this, offset, TO_UINT32(value));
 }
 
 
