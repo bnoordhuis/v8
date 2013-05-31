@@ -79,9 +79,8 @@ function DataViewGetInt8(byteOffset) {
   if (%_ArgumentsLength() < 1) {
     throw MakeTypeError("missing_data_view_argument");
   }
-  var buffer = %DataViewGetBuffer(this);
   var offset = TO_INT32(byteOffset);
-  if (offset < 0 || offset + 1 > %ArrayBufferGetByteLength(buffer)) {
+  if (offset < 0 || offset + 1 > %DataViewGetByteLength(this)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
   return %DataViewGetInt8(this, offset);
@@ -92,9 +91,8 @@ function DataViewGetUint8(byteOffset) {
   if (%_ArgumentsLength() < 1) {
     throw MakeTypeError("missing_data_view_argument");
   }
-  var buffer = %DataViewGetBuffer(this);
   var offset = TO_INT32(byteOffset);
-  if (offset < 0 || offset + 1 > %ArrayBufferGetByteLength(buffer)) {
+  if (offset < 0 || offset + 1 > %DataViewGetByteLength(this)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
   return %DataViewGetUint8(this, offset);
@@ -105,9 +103,8 @@ function DataViewGetInt16(byteOffset, littleEndian) {
   if (%_ArgumentsLength() < 1) {
     throw MakeTypeError("missing_data_view_argument");
   }
-  var buffer = %DataViewGetBuffer(this);
   var offset = TO_INT32(byteOffset);
-  if (offset < 0 || offset + 2 > %ArrayBufferGetByteLength(buffer)) {
+  if (offset < 0 || offset + 2 > %DataViewGetByteLength(this)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
   return %DataViewGetInt16(this, offset, ToBoolean(littleEndian));
@@ -118,9 +115,8 @@ function DataViewGetUint16(byteOffset, littleEndian) {
   if (%_ArgumentsLength() < 1) {
     throw MakeTypeError("missing_data_view_argument");
   }
-  var buffer = %DataViewGetBuffer(this);
   var offset = TO_INT32(byteOffset);
-  if (offset < 0 || offset + 2 > %ArrayBufferGetByteLength(buffer)) {
+  if (offset < 0 || offset + 2 > %DataViewGetByteLength(this)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
   return %DataViewGetUint16(this, offset, ToBoolean(littleEndian));
@@ -131,9 +127,8 @@ function DataViewGetInt32(byteOffset, littleEndian) {
   if (%_ArgumentsLength() < 1) {
     throw MakeTypeError("missing_data_view_argument");
   }
-  var buffer = %DataViewGetBuffer(this);
   var offset = TO_INT32(byteOffset);
-  if (offset < 0 || offset + 4 > %ArrayBufferGetByteLength(buffer)) {
+  if (offset < 0 || offset + 4 > %DataViewGetByteLength(this)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
   return %DataViewGetInt32(this, offset, ToBoolean(littleEndian));
@@ -144,9 +139,8 @@ function DataViewGetUint32(byteOffset, littleEndian) {
   if (%_ArgumentsLength() < 1) {
     throw MakeTypeError("missing_data_view_argument");
   }
-  var buffer = %DataViewGetBuffer(this);
   var offset = TO_INT32(byteOffset);
-  if (offset < 0 || offset + 4 > %ArrayBufferGetByteLength(buffer)) {
+  if (offset < 0 || offset + 4 > %DataViewGetByteLength(this)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
   return %DataViewGetUint32(this, offset, ToBoolean(littleEndian));
@@ -157,9 +151,8 @@ function DataViewGetFloat32(byteOffset, littleEndian) {
   if (%_ArgumentsLength() < 1) {
     throw MakeTypeError("missing_data_view_argument");
   }
-  var buffer = %DataViewGetBuffer(this);
   var offset = TO_INT32(byteOffset);
-  if (offset < 0 || offset + 4 > %ArrayBufferGetByteLength(buffer)) {
+  if (offset < 0 || offset + 4 > %DataViewGetByteLength(this)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
   return %DataViewGetFloat32(this, offset, ToBoolean(littleEndian));
@@ -170,9 +163,8 @@ function DataViewGetFloat64(byteOffset, littleEndian) {
   if (%_ArgumentsLength() < 1) {
     throw MakeTypeError("missing_data_view_argument");
   }
-  var buffer = %DataViewGetBuffer(this);
   var offset = TO_INT32(byteOffset);
-  if (offset < 0 || offset + 8 > %ArrayBufferGetByteLength(buffer)) {
+  if (offset < 0 || offset + 8 > %DataViewGetByteLength(this)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
   return %DataViewGetFloat64(this, offset, ToBoolean(littleEndian));
@@ -183,9 +175,8 @@ function DataViewSetInt8(byteOffset, value) {
   if (%_ArgumentsLength() < 2) {
     throw MakeTypeError("missing_data_view_argument");
   }
-  var buffer = %DataViewGetBuffer(this);
   var offset = TO_INT32(byteOffset);
-  if (offset < 0 || offset + 1 > %ArrayBufferGetByteLength(buffer)) {
+  if (offset < 0 || offset + 1 > %DataViewGetByteLength(this)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
   return %DataViewSetInt8(this, offset, TO_INT32(value));
@@ -196,9 +187,8 @@ function DataViewSetUint8(byteOffset, value) {
   if (%_ArgumentsLength() < 2) {
     throw MakeTypeError("missing_data_view_argument");
   }
-  var buffer = %DataViewGetBuffer(this);
   var offset = TO_INT32(byteOffset);
-  if (offset < 0 || offset + 1 > %ArrayBufferGetByteLength(buffer)) {
+  if (offset < 0 || offset + 1 > %DataViewGetByteLength(this)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
   return %DataViewSetUint8(this, offset, TO_UINT32(value));
@@ -209,9 +199,8 @@ function DataViewSetInt16(byteOffset, value, littleEndian) {
   if (%_ArgumentsLength() < 2) {
     throw MakeTypeError("missing_data_view_argument");
   }
-  var buffer = %DataViewGetBuffer(this);
   var offset = TO_INT32(byteOffset);
-  if (offset < 0 || offset + 2 > %ArrayBufferGetByteLength(buffer)) {
+  if (offset < 0 || offset + 2 > %DataViewGetByteLength(this)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
   var le = !IS_UNDEFINED(littleEndian) && ToBoolean(littleEndian);
@@ -223,9 +212,8 @@ function DataViewSetUint16(byteOffset, value, littleEndian) {
   if (%_ArgumentsLength() < 2) {
     throw MakeTypeError("missing_data_view_argument");
   }
-  var buffer = %DataViewGetBuffer(this);
   var offset = TO_INT32(byteOffset);
-  if (offset < 0 || offset + 2 > %ArrayBufferGetByteLength(buffer)) {
+  if (offset < 0 || offset + 2 > %DataViewGetByteLength(this)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
   var le = !IS_UNDEFINED(littleEndian) && ToBoolean(littleEndian);
@@ -237,9 +225,8 @@ function DataViewSetInt32(byteOffset, value, littleEndian) {
   if (%_ArgumentsLength() < 2) {
     throw MakeTypeError("missing_data_view_argument");
   }
-  var buffer = %DataViewGetBuffer(this);
   var offset = TO_INT32(byteOffset);
-  if (offset < 0 || offset + 4 > %ArrayBufferGetByteLength(buffer)) {
+  if (offset < 0 || offset + 4 > %DataViewGetByteLength(this)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
   var le = !IS_UNDEFINED(littleEndian) && ToBoolean(littleEndian);
@@ -251,9 +238,8 @@ function DataViewSetUint32(byteOffset, value, littleEndian) {
   if (%_ArgumentsLength() < 2) {
     throw MakeTypeError("missing_data_view_argument");
   }
-  var buffer = %DataViewGetBuffer(this);
   var offset = TO_INT32(byteOffset);
-  if (offset < 0 || offset + 4 > %ArrayBufferGetByteLength(buffer)) {
+  if (offset < 0 || offset + 4 > %DataViewGetByteLength(this)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
   var le = !IS_UNDEFINED(littleEndian) && ToBoolean(littleEndian);
@@ -265,9 +251,8 @@ function DataViewSetFloat32(byteOffset, value, littleEndian) {
   if (%_ArgumentsLength() < 2) {
     throw MakeTypeError("missing_data_view_argument");
   }
-  var buffer = %DataViewGetBuffer(this);
   var offset = TO_INT32(byteOffset);
-  if (offset < 0 || offset + 4 > %ArrayBufferGetByteLength(buffer)) {
+  if (offset < 0 || offset + 4 > %DataViewGetByteLength(this)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
   var le = !IS_UNDEFINED(littleEndian) && ToBoolean(littleEndian);
@@ -279,9 +264,8 @@ function DataViewSetFloat64(byteOffset, value, littleEndian) {
   if (%_ArgumentsLength() < 2) {
     throw MakeTypeError("missing_data_view_argument");
   }
-  var buffer = %DataViewGetBuffer(this);
   var offset = TO_INT32(byteOffset);
-  if (offset < 0 || offset + 8 > %ArrayBufferGetByteLength(buffer)) {
+  if (offset < 0 || offset + 8 > %DataViewGetByteLength(this)) {
     throw MakeRangeError("invalid_data_view_offset");
   }
   var le = !IS_UNDEFINED(littleEndian) && ToBoolean(littleEndian);

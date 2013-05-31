@@ -31,6 +31,18 @@ assertThrows("DataView()", TypeError);
 assertThrows("DataView({})", TypeError);
 
 var view = DataView(ArrayBuffer(8));
+assertEquals(0, view.byteOffset);
+assertEquals(8, view.byteLength);
+
+view = DataView(ArrayBuffer(24), 16);
+assertEquals(16, view.byteOffset);
+assertEquals(8, view.byteLength);
+
+view = DataView(ArrayBuffer(32), 16, 8);
+assertEquals(16, view.byteOffset);
+assertEquals(8, view.byteLength);
+
+view = DataView(ArrayBuffer(8));
 assertEquals(0, view.getInt8(7));
 assertEquals(0, view.getUint8(7));
 assertEquals(0, view.getInt16(6));
@@ -142,3 +154,6 @@ assertEquals(0, view.getUint8(0.0));
 assertEquals(0, view.getUint8(0.1));
 assertEquals(0, view.getUint8(0.9));
 assertEquals(1, view.getUint8(1.0));
+
+view = DataView(ArrayBuffer(256), 64, 64);
+assertThrows("view.getInt8(128)", RangeError);
