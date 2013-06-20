@@ -1263,6 +1263,15 @@ void LCodeGen::DoDivI(LDivI* instr) {
   ASSERT(!ToRegister(instr->right()).is(rax));
   ASSERT(!ToRegister(instr->right()).is(rdx));
 
+  if (instr->hydrogen()->right()->IsConstant() &&
+      HConstant::cast(instr->hydrogen()->right())->HasInteger32Value() &&
+      HConstant::cast(instr->hydrogen()->right())->Integer32Value() == 3) {
+    __ movl(rdx, Immediate(0x55555556));
+    __ mul(rdx);
+    __ shr(rax, Immediate(32));
+    return;
+  }
+
   Register left_reg = rax;
 
   // Check for x / 0.
