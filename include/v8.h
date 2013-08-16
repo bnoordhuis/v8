@@ -1531,6 +1531,7 @@ class V8_EXPORT Boolean : public Primitive {
  public:
   bool Value() const;
   V8_INLINE(static Handle<Boolean> New(bool value));
+  V8_INLINE(static Handle<Boolean> New(Isolate* isolate, bool value));
 };
 
 
@@ -6084,7 +6085,12 @@ Handle<Boolean> ScriptOrigin::ResourceIsSharedCrossOrigin() const {
 
 
 Handle<Boolean> Boolean::New(bool value) {
-  return value ? True() : False();
+  return Boolean::New(Isolate::GetCurrent(), value);
+}
+
+
+Handle<Boolean> Boolean::New(Isolate* isolate, bool value) {
+  return value ? True(isolate) : False(isolate);
 }
 
 

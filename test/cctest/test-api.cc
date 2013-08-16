@@ -1557,6 +1557,13 @@ THREADED_TEST(PrimitiveAndWrappedBooleans) {
   CHECK(!primitive_false->IsTrue());
   CHECK(primitive_false->IsFalse());
 
+  primitive_false = Boolean::New(env->GetIsolate(), false);
+  CHECK(primitive_false->IsBoolean());
+  CHECK(!primitive_false->IsBooleanObject());
+  CHECK(!primitive_false->BooleanValue());
+  CHECK(!primitive_false->IsTrue());
+  CHECK(primitive_false->IsFalse());
+
   Local<Value> false_value = BooleanObject::New(false);
   CHECK(!false_value->IsBoolean());
   CHECK(false_value->IsBooleanObject());
@@ -1574,6 +1581,13 @@ THREADED_TEST(PrimitiveAndWrappedBooleans) {
   CHECK(!false_boolean_object->IsFalse());
 
   Local<Value> primitive_true = Boolean::New(true);
+  CHECK(primitive_true->IsBoolean());
+  CHECK(!primitive_true->IsBooleanObject());
+  CHECK(primitive_true->BooleanValue());
+  CHECK(primitive_true->IsTrue());
+  CHECK(!primitive_true->IsFalse());
+
+  primitive_true = Boolean::New(env->GetIsolate(), true);
   CHECK(primitive_true->IsBoolean());
   CHECK(!primitive_true->IsBooleanObject());
   CHECK(primitive_true->BooleanValue());
