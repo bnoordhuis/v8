@@ -599,24 +599,6 @@ v8::Handle<Primitive> Null() {
 }
 
 
-v8::Handle<Boolean> True() {
-  i::Isolate* isolate = i::Isolate::Current();
-  if (!EnsureInitializedForIsolate(isolate, "v8::True()")) {
-    return v8::Handle<Boolean>();
-  }
-  return ToApiHandle<Boolean>(isolate->factory()->true_value());
-}
-
-
-v8::Handle<Boolean> False() {
-  i::Isolate* isolate = i::Isolate::Current();
-  if (!EnsureInitializedForIsolate(isolate, "v8::False()")) {
-    return v8::Handle<Boolean>();
-  }
-  return ToApiHandle<Boolean>(isolate->factory()->false_value());
-}
-
-
 ResourceConstraints::ResourceConstraints()
   : max_young_space_size_(0),
     max_old_space_size_(0),

@@ -3795,8 +3795,9 @@ class V8_EXPORT DeclareExtension {
 
 Handle<Primitive> V8_EXPORT Undefined();
 Handle<Primitive> V8_EXPORT Null();
-Handle<Boolean> V8_EXPORT True();
-Handle<Boolean> V8_EXPORT False();
+
+V8_INLINE(Handle<Boolean> True());
+V8_INLINE(Handle<Boolean> False());
 
 V8_INLINE(Handle<Primitive> Undefined(Isolate* isolate));
 V8_INLINE(Handle<Primitive> Null(Isolate* isolate));
@@ -6528,12 +6529,22 @@ Handle<Primitive> Null(Isolate* isolate) {
 }
 
 
+Handle<Boolean> True() {
+  return True(Isolate::GetCurrent());
+}
+
+
 Handle<Boolean> True(Isolate* isolate) {
   typedef internal::Object* S;
   typedef internal::Internals I;
   I::CheckInitialized(isolate);
   S* slot = I::GetRoot(isolate, I::kTrueValueRootIndex);
   return Handle<Boolean>(reinterpret_cast<Boolean*>(slot));
+}
+
+
+Handle<Boolean> False() {
+  return False(Isolate::GetCurrent());
 }
 
 
