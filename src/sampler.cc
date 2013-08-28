@@ -412,6 +412,8 @@ void SignalHandler::HandleProfilerSignal(int signal, siginfo_t* info,
 #endif
 
 
+#if !defined(__linux__)
+
 class SamplerThread : public Thread {
  public:
   static const int kSamplerThreadStackSize = 64 * KB;
@@ -504,6 +506,7 @@ class SamplerThread : public Thread {
 Mutex* SamplerThread::mutex_ = NULL;
 SamplerThread* SamplerThread::instance_ = NULL;
 
+#endif  // !defined(__linux__)
 
 //
 // StackTracer implementation
@@ -550,12 +553,16 @@ DISABLE_ASAN void TickSample::Init(Isolate* isolate,
 
 
 void Sampler::SetUp() {
+#if !defined(__linux__)
   SamplerThread::SetUp();
+#endif
 }
 
 
 void Sampler::TearDown() {
+#if !defined(__linux__)
   SamplerThread::TearDown();
+#endif
 }
 
 
@@ -580,13 +587,32 @@ Sampler::~Sampler() {
 void Sampler::Start() {
   ASSERT(!IsActive());
   SetActive(true);
+#if defined(__linux__)
+  ASSERT(SignalHandler::Installed() == false);
+  SignalHandler::EnsureInstalled();
+  const itimerval interval = {
+    { 0, 100 },
+    { 0, 100 }
+  };
+  CHECK(0 == setitimer(ITIMER_PROF, &interval, NULL));
+#else
   SamplerThread::AddActiveSampler(this);
+#endif
 }
 
 
 void Sampler::Stop() {
   ASSERT(IsActive());
+#if defined(__linux__)
+  const itimerval interval = {
+    { 0, 0 },
+    { 0, 0 }
+  };
+  CHECK(0 == setitimer(ITIMER_PROF, &interval, NULL));
+  SignalHandler::Restore();
+#else
   SamplerThread::RemoveActiveSampler(this);
+#endif
   SetActive(false);
 }
 
