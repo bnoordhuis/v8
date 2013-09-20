@@ -32,6 +32,7 @@
 #include "flags.h"
 #include "platform/mutex.h"
 #include "platform/time.h"
+#include "platform.h"
 #include "utils.h"
 
 namespace v8 {
@@ -85,6 +86,17 @@ RandomNumberGenerator::RandomNumberGenerator() {
   int64_t seed = Time::NowFromSystemTime().ToInternalValue() << 24;
   seed ^= TimeTicks::HighResNow().ToInternalValue() << 16;
   seed ^= TimeTicks::Now().ToInternalValue() << 8;
+  // Mix in the process ID. Run it through a DJB hash to shuffle
+  // the bits around because the PID by itself won't have much
+  // entropy, most of its bits will be zero.
+  uint32_t pid = OS::GetCurrentProcessId();
+  uint64_t hash = 0x1505;
+  hash = (hash * 33) + ((pid >> 0) & 255);
+  hash = (hash * 33) + ((pid >> 8) & 255);
+  hash = (hash * 33) + ((pid >> 16) & 255);
+  hash = (hash * 33) + ((pid >> 24) & 255);
+  hash = ((hash & 0x3FFFFFFFUL) << 32) | (hash & 0xFFFFFFFFUL);
+  seed ^= hash;
   SetSeed(seed);
 }
 
