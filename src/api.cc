@@ -977,6 +977,12 @@ void Template::SetAccessorProperty(
 }
 
 
+Isolate* Template::GetIsolate() {
+  i::Isolate* isolate = Utils::OpenHandle(this)->GetIsolate();
+  return reinterpret_cast<Isolate*>(isolate);
+}
+
+
 // --- F u n c t i o n   T e m p l a t e ---
 static void InitializeFunctionTemplate(
       i::Handle<i::FunctionTemplateInfo> info) {

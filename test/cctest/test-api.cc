@@ -1015,6 +1015,7 @@ static void TestFunctionTemplateInitializer(Handler handler,
 
     Local<v8::FunctionTemplate> fun_templ =
         v8::FunctionTemplate::New(handler);
+    ASSERT_EQ(fun_templ->GetIsolate(), env->GetIsolate());
     Local<Function> fun = fun_templ->GetFunction();
     env->Global()->Set(v8_str("obj"), fun);
     Local<Script> script = v8_compile("obj()");
@@ -1761,8 +1762,10 @@ THREADED_TEST(GlobalPrototype) {
 
 
 THREADED_TEST(ObjectTemplate) {
-  v8::HandleScope scope(CcTest::isolate());
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
   Local<ObjectTemplate> templ1 = ObjectTemplate::New();
+  ASSERT_EQ(templ1->GetIsolate(), isolate);
   templ1->Set("x", v8_num(10));
   templ1->Set("y", v8_num(13));
   LocalContext env;

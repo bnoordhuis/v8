@@ -3115,6 +3115,9 @@ class V8_EXPORT Template : public Data {
                                Local<AccessorSignature>(),
                            AccessControl settings = DEFAULT);
 
+  /** Returns the isolate associated with the template. */
+  v8::Isolate* GetIsolate();
+
  private:
   Template();
 
