@@ -1926,24 +1926,6 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
       }
       break;
     }
-    case kX87Xchgb: {
-      size_t index = 0;
-      Operand operand = i.MemoryOperand(&index);
-      __ xchg_b(i.InputRegister(index), operand);
-      break;
-    }
-    case kX87Xchgw: {
-      size_t index = 0;
-      Operand operand = i.MemoryOperand(&index);
-      __ xchg_w(i.InputRegister(index), operand);
-      break;
-    }
-    case kX87Xchgl: {
-      size_t index = 0;
-      Operand operand = i.MemoryOperand(&index);
-      __ xchg(i.InputRegister(index), operand);
-      break;
-    }
     case kX87PushFloat32:
       __ lea(esp, Operand(esp, -kFloatSize));
       if (instr->InputAt(0)->IsFPStackSlot()) {
@@ -2012,6 +1994,30 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
     case kCheckedStoreWord64:
       UNREACHABLE();  // currently unsupported checked int64 load/store.
       break;
+    case kAtomicExchangeInt8: {
+      __ xchg_b(i.InputRegister(0), i.MemoryOperand(1));
+      __ movsx_b(i.InputRegister(0), i.InputRegister(0));
+      break;
+    }
+    case kAtomicExchangeUint8: {
+      __ xchg_b(i.InputRegister(0), i.MemoryOperand(1));
+      __ movzx_b(i.InputRegister(0), i.InputRegister(0));
+      break;
+    }
+    case kAtomicExchangeInt16: {
+      __ xchg_w(i.InputRegister(0), i.MemoryOperand(1));
+      __ movsx_w(i.InputRegister(0), i.InputRegister(0));
+      break;
+    }
+    case kAtomicExchangeUint16: {
+      __ xchg_w(i.InputRegister(0), i.MemoryOperand(1));
+      __ movzx_w(i.InputRegister(0), i.InputRegister(0));
+      break;
+    }
+    case kAtomicExchangeWord32: {
+      __ xchg(i.InputRegister(0), i.MemoryOperand(1));
+      break;
+    }
     case kAtomicLoadInt8:
     case kAtomicLoadUint8:
     case kAtomicLoadInt16:
