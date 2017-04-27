@@ -27,6 +27,9 @@ MacroAssembler::MacroAssembler(Isolate* isolate, void* buffer, int size,
       has_frame_(false),
       isolate_(isolate),
       jit_cookie_(0) {
+  if (FLAG_mask_constants_with_cookie) {
+    jit_cookie_ = isolate->random_number_generator()->NextInt();
+  }
   if (create_code_object == CodeObjectRequired::kYes) {
     code_object_ =
         Handle<Object>::New(isolate_->heap()->undefined_value(), isolate_);
@@ -553,6 +556,16 @@ void MacroAssembler::RecordWriteCodeEntryField(Register js_function,
   pop(js_function);
 
   bind(&done);
+}
+
+void MacroAssembler::MaybeDropFrames() {
+  // Check whether we need to drop frames to restart a function on the stack.
+  ExternalReference restart_fp =
+      ExternalReference::debug_restart_fp_address(isolate());
+  mov(ebx, Operand::StaticVariable(restart_fp));
+  test(ebx, ebx);
+  j(not_zero, isolate()->builtins()->FrameDropperTrampoline(),
+    RelocInfo::CODE_TARGET);
 }
 
 void MacroAssembler::DebugBreak() {

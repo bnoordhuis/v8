@@ -226,6 +226,7 @@ class MacroAssembler: public Assembler {
   // Debugger Support
 
   void DebugBreak();
+  void MaybeDropFrames();
 
   // Generates function and stub prologue code.
   void StubPrologue(StackFrame::Type type);
