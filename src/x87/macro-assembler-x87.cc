@@ -568,14 +568,6 @@ void MacroAssembler::MaybeDropFrames() {
     RelocInfo::CODE_TARGET);
 }
 
-void MacroAssembler::DebugBreak() {
-  Move(eax, Immediate(0));
-  mov(ebx, Immediate(ExternalReference(Runtime::kHandleDebuggerStatement,
-                                       isolate())));
-  CEntryStub ces(isolate(), 1);
-  call(ces.GetCode(), RelocInfo::DEBUGGER_STATEMENT);
-}
-
 void MacroAssembler::ShlPair(Register high, Register low, uint8_t shift) {
   if (shift >= 32) {
     mov(high, low);
