@@ -60,6 +60,8 @@ class MacroAssembler: public Assembler {
   MacroAssembler(Isolate* isolate, void* buffer, int size,
                  CodeObjectRequired create_code_object);
 
+  int jit_cookie() const { return jit_cookie_; }
+
   Isolate* isolate() const { return isolate_; }
 
   void Load(Register dst, const Operand& src, Representation r);
@@ -814,6 +816,7 @@ class MacroAssembler: public Assembler {
   Isolate* isolate_;
   // This handle will be patched with the code object on installation.
   Handle<Object> code_object_;
+  int jit_cookie_;
 
   // Helper functions for generating invokes.
   void InvokePrologue(const ParameterCount& expected,

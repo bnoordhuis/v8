@@ -2065,7 +2065,7 @@ void Assembler::GrowBuffer() {
   // they must ensure that kMaximalBufferSize is not too large.
   if (desc.buffer_size > kMaximalBufferSize ||
       static_cast<size_t>(desc.buffer_size) >
-          isolate()->heap()->MaxOldGenerationSize()) {
+          isolate_data().max_old_generation_size_) {
     V8::FatalProcessOutOfMemory("Assembler::GrowBuffer");
   }
 
@@ -2207,7 +2207,7 @@ void Assembler::RecordRelocInfo(RelocInfo::Mode rmode, intptr_t data) {
       !serializer_enabled() && !emit_debug_code()) {
       return;
   }
-  RelocInfo rinfo(isolate(), pc_, rmode, data, NULL);
+  RelocInfo rinfo(pc_, rmode, data, NULL);
   reloc_info_writer.Write(&rinfo);
 }
 
