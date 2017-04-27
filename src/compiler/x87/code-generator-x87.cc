@@ -424,6 +424,21 @@ class OutOfLineRecordWrite final : public OutOfLineCode {
     __ lea(esp, Operand(esp, kDoubleSize));                                   \
   } while (false)
 
+#define ASSEMBLE_BINOP(asm_instr)                                     \
+  do {                                                                \
+    if (AddressingModeField::decode(instr->opcode()) != kMode_None) { \
+      size_t index = 1;                                               \
+      Operand right = i.MemoryOperand(&index);                        \
+      __ asm_instr(i.InputRegister(0), right);                        \
+    } else {                                                          \
+      if (HasImmediateInput(instr, 1)) {                              \
+        __ asm_instr(i.InputOperand(0), i.InputImmediate(1));         \
+      } else {                                                        \
+        __ asm_instr(i.InputRegister(0), i.InputOperand(1));          \
+      }                                                               \
+    }                                                                 \
+  } while (0)
+
 void CodeGenerator::AssembleDeconstructFrame() {
   __ mov(esp, ebp);
   __ pop(ebp);
@@ -876,18 +891,10 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
       ASSEMBLE_IEEE754_UNOP(tanh);
       break;
     case kX87Add:
-      if (HasImmediateInput(instr, 1)) {
-        __ add(i.InputOperand(0), i.InputImmediate(1));
-      } else {
-        __ add(i.InputRegister(0), i.InputOperand(1));
-      }
+      ASSEMBLE_BINOP(add);
       break;
     case kX87And:
-      if (HasImmediateInput(instr, 1)) {
-        __ and_(i.InputOperand(0), i.InputImmediate(1));
-      } else {
-        __ and_(i.InputRegister(0), i.InputOperand(1));
-      }
+      ASSEMBLE_BINOP(and_);
       break;
     case kX87Cmp:
       ASSEMBLE_COMPARE(cmp);
@@ -935,25 +942,13 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
       __ neg(i.OutputOperand());
       break;
     case kX87Or:
-      if (HasImmediateInput(instr, 1)) {
-        __ or_(i.InputOperand(0), i.InputImmediate(1));
-      } else {
-        __ or_(i.InputRegister(0), i.InputOperand(1));
-      }
+      ASSEMBLE_BINOP(or_);
       break;
     case kX87Xor:
-      if (HasImmediateInput(instr, 1)) {
-        __ xor_(i.InputOperand(0), i.InputImmediate(1));
-      } else {
-        __ xor_(i.InputRegister(0), i.InputOperand(1));
-      }
+      ASSEMBLE_BINOP(xor_);
       break;
     case kX87Sub:
-      if (HasImmediateInput(instr, 1)) {
-        __ sub(i.InputOperand(0), i.InputImmediate(1));
-      } else {
-        __ sub(i.InputRegister(0), i.InputOperand(1));
-      }
+      ASSEMBLE_BINOP(sub);
       break;
     case kX87Shl:
       if (HasImmediateInput(instr, 1)) {

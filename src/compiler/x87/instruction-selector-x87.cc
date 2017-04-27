@@ -39,6 +39,11 @@ class X87OperandGenerator final : public OperandGenerator {
     MachineRepresentation rep =
         LoadRepresentationOf(input->op()).representation();
     switch (opcode) {
+      case kX87And:
+      case kX87Or:
+      case kX87Xor:
+      case kX87Add:
+      case kX87Sub:
       case kX87Cmp:
       case kX87Test:
         return rep == MachineRepresentation::kWord32 ||
@@ -446,7 +451,7 @@ void VisitBinop(InstructionSelector* selector, Node* node,
   Int32BinopMatcher m(node);
   Node* left = m.left().node();
   Node* right = m.right().node();
-  InstructionOperand inputs[4];
+  InstructionOperand inputs[6];
   size_t input_count = 0;
   InstructionOperand outputs[2];
   size_t output_count = 0;
@@ -467,12 +472,26 @@ void VisitBinop(InstructionSelector* selector, Node* node,
     inputs[input_count++] = g.UseRegister(left);
     inputs[input_count++] = g.UseImmediate(right);
   } else {
+    int effect_level = selector->GetEffectLevel(node);
+    if (cont->IsBranch()) {
+      effect_level = selector->GetEffectLevel(
+          cont->true_block()->PredecessorAt(0)->control_input());
+    }
     if (node->op()->HasProperty(Operator::kCommutative) &&
-        g.CanBeBetterLeftOperand(right)) {
+        g.CanBeBetterLeftOperand(right) &&
+        (!g.CanBeBetterLeftOperand(left) ||
+         !g.CanBeMemoryOperand(opcode, node, right, effect_level))) {
       std::swap(left, right);
     }
-    inputs[input_count++] = g.UseRegister(left);
-    inputs[input_count++] = g.Use(right);
+    if (g.CanBeMemoryOperand(opcode, node, right, effect_level)) {
+      inputs[input_count++] = g.UseRegister(left);
+      AddressingMode addressing_mode =
+          g.GetEffectiveAddressMemoryOperand(right, inputs, &input_count);
+      opcode |= AddressingModeField::encode(addressing_mode);
+    } else {
+      inputs[input_count++] = g.UseRegister(left);
+      inputs[input_count++] = g.Use(right);
+    }
   }
 
   if (cont->IsBranch()) {
