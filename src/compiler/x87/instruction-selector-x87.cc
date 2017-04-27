@@ -1839,7 +1839,11 @@ void InstructionSelector::VisitAtomicStore(Node* node) {
   AddressingMode addressing_mode;
   InstructionOperand inputs[4];
   size_t input_count = 0;
-  inputs[input_count++] = g.UseUniqueRegister(value);
+  if (rep == MachineRepresentation::kWord8) {
+    inputs[input_count++] = g.UseByteRegister(value);
+  } else {
+    inputs[input_count++] = g.UseUniqueRegister(value);
+  }
   inputs[input_count++] = g.UseUniqueRegister(base);
   if (g.CanBeImmediate(index)) {
     inputs[input_count++] = g.UseImmediate(index);
@@ -1946,6 +1950,67 @@ void InstructionSelector::VisitAtomicCompareExchange(Node* node) {
   InstructionCode code = opcode | AddressingModeField::encode(addressing_mode);
   Emit(code, 1, outputs, input_count, inputs);
 }
+
+void InstructionSelector::VisitAtomicBinaryOperation(
+    Node* node, ArchOpcode int8_op, ArchOpcode uint8_op, ArchOpcode int16_op,
+    ArchOpcode uint16_op, ArchOpcode word32_op) {
+  X87OperandGenerator g(this);
+  Node* base = node->InputAt(0);
+  Node* index = node->InputAt(1);
+  Node* value = node->InputAt(2);
+
+  MachineType type = AtomicOpRepresentationOf(node->op());
+  ArchOpcode opcode = kArchNop;
+  if (type == MachineType::Int8()) {
+    opcode = int8_op;
+  } else if (type == MachineType::Uint8()) {
+    opcode = uint8_op;
+  } else if (type == MachineType::Int16()) {
+    opcode = int16_op;
+  } else if (type == MachineType::Uint16()) {
+    opcode = uint16_op;
+  } else if (type == MachineType::Int32() || type == MachineType::Uint32()) {
+    opcode = word32_op;
+  } else {
+    UNREACHABLE();
+    return;
+  }
+  InstructionOperand outputs[1];
+  AddressingMode addressing_mode;
+  InstructionOperand inputs[3];
+  size_t input_count = 0;
+  inputs[input_count++] = g.UseUniqueRegister(value);
+  inputs[input_count++] = g.UseUniqueRegister(base);
+  if (g.CanBeImmediate(index)) {
+    inputs[input_count++] = g.UseImmediate(index);
+    addressing_mode = kMode_MRI;
+  } else {
+    inputs[input_count++] = g.UseUniqueRegister(index);
+    addressing_mode = kMode_MR1;
+  }
+  outputs[0] = g.DefineAsFixed(node, eax);
+  InstructionOperand temp[1];
+  if (type == MachineType::Int8() || type == MachineType::Uint8()) {
+    temp[0] = g.UseByteRegister(node);
+  } else {
+    temp[0] = g.TempRegister();
+  }
+  InstructionCode code = opcode | AddressingModeField::encode(addressing_mode);
+  Emit(code, 1, outputs, input_count, inputs, 1, temp);
+}
+
+#define VISIT_ATOMIC_BINOP(op)                                              \
+  void InstructionSelector::VisitAtomic##op(Node* node) {                   \
+    VisitAtomicBinaryOperation(node, kAtomic##op##Int8, kAtomic##op##Uint8, \
+                               kAtomic##op##Int16, kAtomic##op##Uint16,     \
+                               kAtomic##op##Word32);                        \
+  }
+VISIT_ATOMIC_BINOP(Add)
+VISIT_ATOMIC_BINOP(Sub)
+VISIT_ATOMIC_BINOP(And)
+VISIT_ATOMIC_BINOP(Or)
+VISIT_ATOMIC_BINOP(Xor)
+#undef VISIT_ATOMIC_BINOP
 
 void InstructionSelector::VisitInt32AbsWithOverflow(Node* node) {
   UNREACHABLE();
