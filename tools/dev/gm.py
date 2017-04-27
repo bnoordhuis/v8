@@ -182,7 +182,7 @@ class Config(object):
 
   def GetV8TargetCpu(self):
     if self.arch in ("arm", "arm64", "mipsel", "mips64el", "ppc", "ppc64",
-                     "s390", "s390x"):
+                     "s390", "s390x", "x87"):
       return "\nv8_target_cpu = \"%s\"" % self.arch
     return ""
 

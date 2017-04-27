@@ -413,6 +413,12 @@ config("toolchain") {
       cflags += [ "/arch:SSE2" ]
     }
   }
+  if (v8_current_cpu == "x87") {
+    defines += [ "V8_TARGET_ARCH_X87" ]
+    if (is_win) {
+      cflags += [ "/arch:IA32" ]
+    }
+  }
   if (v8_current_cpu == "x64") {
     defines += [ "V8_TARGET_ARCH_X64" ]
     if (is_win) {

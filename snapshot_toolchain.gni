@@ -54,11 +54,11 @@ if (v8_snapshot_toolchain == "") {
     # This is not a cross-compile, so build the snapshot with the current
     # toolchain.
     v8_snapshot_toolchain = current_toolchain
-  } else if (current_os == host_os && current_cpu == "x86" &&
-             host_cpu == "x64") {
-    # This is an x64 -> x86 cross-compile, but x64 hosts can usually run x86
-    # binaries built for the same OS, so build the snapshot with the current
-    # toolchain here, too.
+  } else if (current_os == host_os && host_cpu == "x64" &&
+             (current_cpu == "x86" || current_cpu == "x87")) {
+    # This is an x64 -> x86 or x64 -> x87 cross-compile, but x64 hosts can
+    # usually run x86 and x87 binaries built for the same OS, so build the
+    # snapshot with the current toolchain here, too.
     v8_snapshot_toolchain = current_toolchain
   } else if (current_os == "win" && host_os == "mac" && is_clang) {
     # This is a mac -> win cross-compile, which is only supported w/ clang.

@@ -39,6 +39,9 @@
       'x64.debug': 'default_debug_x64',
       'x64.optdebug': 'default_optdebug_x64',
       'x64.release': 'default_release_x64',
+      'x87.debug': 'default_debug_x87',
+      'x87.optdebug': 'default_optdebug_x87',
+      'x87.release': 'default_release_x87',
     },
 
     'client.dart.fyi': {
@@ -286,6 +289,12 @@
       'gn', 'debug', 'x86', 'v8_enable_slow_dchecks'],
     'default_release_x86': [
       'gn', 'release', 'x86'],
+    'default_debug_x87': [
+      'gn', 'debug', 'x87', 'v8_enable_slow_dchecks', 'v8_full_debug'],
+    'default_optdebug_x87': [
+      'gn', 'debug', 'x87', 'v8_enable_slow_dchecks'],
+    'default_release_x87': [
+      'gn', 'release', 'x87'],
 
 
     # GN debug configs for simulators.
@@ -769,6 +778,11 @@
     'x86': {
       'gn_args': 'target_cpu="x86"',
       'gyp_defines': 'target_arch=ia32',
+    },
+
+    'x87': {
+      'gn_args': 'target_cpu="x87" is_clang=false use_sysroot=false',
+      'gyp_defines': 'target_arch=x87',
     },
   },
 }
