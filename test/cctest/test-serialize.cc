@@ -2579,7 +2579,8 @@ TEST(SnapshotCreatorUnknownExternalReferences) {
 
 TEST(SnapshotCreatorTemplates) {
   DisableAlwaysOpt();
-  v8::StartupData blob;
+  v8::StartupData old_blob;
+  v8::StartupData new_blob;
 
   {
     InternalFieldData* a1 = new InternalFieldData{11};
@@ -2633,7 +2634,7 @@ TEST(SnapshotCreatorTemplates) {
       CHECK_EQ(0u, creator.AddTemplate(callback));
       CHECK_EQ(1u, creator.AddTemplate(global_template));
     }
-    blob =
+    old_blob =
         creator.CreateBlob(v8::SnapshotCreator::FunctionCodeHandling::kClear);
 
     delete a1;
@@ -2641,9 +2642,49 @@ TEST(SnapshotCreatorTemplates) {
     delete c0;
   }
 
+  // Create a new snapshot from the old one but with the original references
+  // and templates.
   {
+    v8::SnapshotCreator creator(original_external_references, &old_blob);
+    v8::Isolate* isolate = creator.GetIsolate();
+    {
+      v8::HandleScope handle_scope(isolate);
+      v8::Local<v8::FunctionTemplate> fun_template =
+          v8::FunctionTemplate::FromSnapshot(isolate, 0).ToLocalChecked();
+      v8::Local<v8::ObjectTemplate> obj_template =
+          v8::ObjectTemplate::FromSnapshot(isolate, 1).ToLocalChecked();
+      USE(obj_template);
+      CHECK(!fun_template.IsEmpty());
+      v8::Local<v8::Context> context = v8::Context::New(isolate);
+      creator.SetDefaultContext(context);
+      context =
+          v8::Context::FromSnapshot(
+              isolate, 0,
+              v8::DeserializeInternalFieldsCallback(
+                  DeserializeInternalFields, reinterpret_cast<void*>(2017)))
+              .ToLocalChecked();
+      v8::Context::Scope context_scope(context);
+      v8::Local<v8::Function> fun =
+          fun_template->GetFunction(context).ToLocalChecked();
+      CHECK(context->Global()->Set(context, v8_str("g"), fun).FromJust());
+      // Check that it instantiates to the same prototype.
+      ExpectTrue("g.prototype === f.prototype");
+      ExpectInt32("f()", 42);
+      ExpectInt32("g()", 42);
+      CHECK_EQ(0u,
+               creator.AddContext(context, v8::SerializeInternalFieldsCallback(
+                                               SerializeInternalFields,
+                                               reinterpret_cast<void*>(2016))));
+      CHECK_EQ(0u, creator.AddTemplate(fun_template));
+      CHECK_EQ(1u, creator.AddTemplate(obj_template));
+    }
+    new_blob =
+        creator.CreateBlob(v8::SnapshotCreator::FunctionCodeHandling::kClear);
+  }
+
+  for (auto blob : { &old_blob, &new_blob }) {
     v8::Isolate::CreateParams params;
-    params.snapshot_blob = &blob;
+    params.snapshot_blob = blob;
     params.array_buffer_allocator = CcTest::array_buffer_allocator();
     params.external_references = original_external_references;
     // Test-appropriate equivalent of v8::Isolate::New.
@@ -2728,7 +2769,8 @@ TEST(SnapshotCreatorTemplates) {
     }
     isolate->Dispose();
   }
-  delete[] blob.data;
+  delete[] old_blob.data;
+  delete[] new_blob.data;
 }
 
 TEST(SnapshotCreatorIncludeGlobalProxy) {

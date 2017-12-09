@@ -95,13 +95,11 @@ void Heap::SetInterpreterEntryReturnPCOffset(int pc_offset) {
 }
 
 void Heap::SetSerializedTemplates(FixedArray* templates) {
-  DCHECK_EQ(empty_fixed_array(), serialized_templates());
   DCHECK(isolate()->serializer_enabled());
   set_serialized_templates(templates);
 }
 
 void Heap::SetSerializedGlobalProxySizes(FixedArray* sizes) {
-  DCHECK_EQ(empty_fixed_array(), serialized_global_proxy_sizes());
   DCHECK(isolate()->serializer_enabled());
   set_serialized_global_proxy_sizes(sizes);
 }
