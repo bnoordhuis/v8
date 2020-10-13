@@ -3110,6 +3110,10 @@ bool StackFrame::IsConstructor() const {
   return i::StackTraceFrame::IsConstructor(Utils::OpenHandle(this));
 }
 
+bool StackFrame::IsAsync() const {
+  return i::StackTraceFrame::IsAsync(Utils::OpenHandle(this));
+}
+
 bool StackFrame::IsWasm() const {
   return i::StackTraceFrame::IsWasm(Utils::OpenHandle(this));
 }

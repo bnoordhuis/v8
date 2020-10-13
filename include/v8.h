@@ -2248,9 +2248,14 @@ class V8_EXPORT StackFrame {
   bool IsConstructor() const;
 
   /**
-   * Returns whether or not the associated functions is defined in wasm.
+   * Returns whether or not the associated function is defined in wasm.
    */
   bool IsWasm() const;
+
+  /**
+   * Returns whether or not the associated function is async.
+   */
+  bool IsAsync() const;
 
   /**
    * Returns whether or not the associated function is defined by the user.

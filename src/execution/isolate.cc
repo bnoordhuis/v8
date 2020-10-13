@@ -1014,7 +1014,6 @@ struct CaptureStackTraceOptions {
 
   bool capture_builtin_exit_frames;
   bool capture_only_frames_subject_to_debugging;
-  bool async_stack_trace;
 };
 
 Handle<Object> CaptureStackTrace(Isolate* isolate, Handle<Object> caller,
@@ -1082,7 +1081,7 @@ Handle<Object> CaptureStackTrace(Isolate* isolate, Handle<Object> caller,
   // If --async-stack-traces are enabled and the "current microtask" is a
   // PromiseReactionJobTask, we try to enrich the stack trace with async
   // frames.
-  if (options.async_stack_trace) {
+  if (FLAG_async_stack_traces) {
     Handle<Object> current_microtask = isolate->factory()->current_microtask();
     if (current_microtask->IsPromiseReactionJobTask()) {
       Handle<PromiseReactionJobTask> promise_reaction_job_task =
@@ -1157,7 +1156,6 @@ Handle<Object> Isolate::CaptureSimpleStackTrace(Handle<JSReceiver> error_object,
   options.limit = limit;
   options.skip_mode = mode;
   options.capture_builtin_exit_frames = true;
-  options.async_stack_trace = FLAG_async_stack_traces;
   options.filter_mode = FrameArrayBuilder::CURRENT_SECURITY_CONTEXT;
   options.capture_only_frames_subject_to_debugging = false;
 
@@ -1249,7 +1247,6 @@ Handle<FixedArray> Isolate::CaptureCurrentStackTrace(
   options.limit = Max(frame_limit, 0);  // Ensure no negative values.
   options.skip_mode = SKIP_NONE;
   options.capture_builtin_exit_frames = false;
-  options.async_stack_trace = false;
   options.filter_mode =
       (stack_trace_options & StackTrace::kExposeFramesAcrossSecurityOrigins)
           ? FrameArrayBuilder::ALL
@@ -2094,7 +2091,6 @@ void Isolate::PrintCurrentStackTrace(FILE* out) {
   options.limit = 0;
   options.skip_mode = SKIP_NONE;
   options.capture_builtin_exit_frames = true;
-  options.async_stack_trace = FLAG_async_stack_traces;
   options.filter_mode = FrameArrayBuilder::CURRENT_SECURITY_CONTEXT;
   options.capture_only_frames_subject_to_debugging = false;
 

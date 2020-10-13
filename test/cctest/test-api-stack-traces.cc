@@ -795,6 +795,78 @@ TEST(DynamicWithSourceURLInStackTraceString) {
   CHECK_NOT_NULL(strstr(*stack, "at foo (source_url:3:5)"));
 }
 
+THREADED_TEST(IsAsync) {
+  auto check = [](const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+
+    auto stack_trace = v8::StackTrace::CurrentStackTrace(isolate, 42);
+    CHECK(!stack_trace.IsEmpty());
+    CHECK_EQ(2, stack_trace->GetFrameCount());
+
+    auto frame0 = stack_trace->GetFrame(isolate, 0);
+    CHECK(frame0->GetFunctionName()->StrictEquals(v8_str(isolate, "g")));
+    CHECK(!frame0->IsAsync());
+
+    auto frame1 = stack_trace->GetFrame(isolate, 1);
+    CHECK(frame1->GetFunctionName()->StrictEquals(v8_str(isolate, "f")));
+    CHECK(frame1->IsAsync());
+  };
+
+  CHECK(v8::internal::FLAG_async_stack_traces);
+
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  auto global = context->Global();
+  auto name = v8_str(isolate, "check");
+  auto func = v8::Function::New(context.local(), check).ToLocalChecked();
+  global->Set(context.local(), name, func).Check();
+
+  CompileRun(
+      "f();\n"
+      "async function f() { await g(); }\n"
+      "async function g() { await 42; check(); }\n");
+}
+
+THREADED_TEST(IsNotAsync) {
+  auto check = [](const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+
+    auto stack_trace = v8::StackTrace::CurrentStackTrace(isolate, 42);
+    CHECK(!stack_trace.IsEmpty());
+    CHECK_EQ(3, stack_trace->GetFrameCount());
+
+    auto frame0 = stack_trace->GetFrame(isolate, 0);
+    CHECK(frame0->GetFunctionName()->StrictEquals(v8_str(isolate, "g")));
+    CHECK(!frame0->IsAsync());
+
+    auto frame1 = stack_trace->GetFrame(isolate, 1);
+    CHECK(frame1->GetFunctionName()->StrictEquals(v8_str(isolate, "f")));
+    CHECK(!frame1->IsAsync());
+
+    auto frame2 = stack_trace->GetFrame(isolate, 2);
+    CHECK(frame2->GetFunctionName().IsEmpty());  // Toplevel.
+    CHECK(!frame2->IsAsync());
+  };
+
+  CHECK(v8::internal::FLAG_async_stack_traces);
+
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  auto global = context->Global();
+  auto name = v8_str(isolate, "check");
+  auto func = v8::Function::New(context.local(), check).ToLocalChecked();
+  global->Set(context.local(), name, func).Check();
+
+  CompileRun(
+      "f();\n"
+      "async function f() { await g(); }\n"
+      "async function g() { check(); }\n");
+}
+
 TEST(CaptureStackTraceForStackOverflow) {
   v8::internal::FLAG_stack_size = 150;
   LocalContext current;
